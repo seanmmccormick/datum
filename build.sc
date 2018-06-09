@@ -40,3 +40,7 @@ object lens extends CommonSettings {
 
   def moduleDeps = Seq(core)
 }
+
+object challenges extends CommonSettings {
+  def moduleDeps = Seq(core, lens)
+}

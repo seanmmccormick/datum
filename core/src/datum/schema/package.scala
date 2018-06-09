@@ -1,5 +1,6 @@
 package datum
 
+import datum.schema2.StructF
 import schemes.Fix
 
 import scala.collection.immutable.SortedMap

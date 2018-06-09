@@ -2,6 +2,7 @@ package datum.schema.json
 
 import datum.schema._
 import datum.helpers._
+import datum.schema2
 import ujson.Js
 
 import scala.collection.immutable.SortedMap
@@ -18,6 +19,6 @@ class JsonAlgebras {
   val load: Coalgebra[SchemaF, Js.Value] = {
     case ujson.Js.Str(x) if x == "string" => TextF
     case ujson.Js.Str(x) if x == "int" => IntF
-    case ujson.Js.Obj(fields) => StructF(SortedMap(fields.toSeq:_*))
+    case ujson.Js.Obj(fields) => schema2.StructF(SortedMap(fields.toSeq:_*))
   }
 }

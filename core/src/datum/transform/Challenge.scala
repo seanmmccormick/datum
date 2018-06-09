@@ -1,7 +1,7 @@
 package datum.transform
 
 import datum.schema._
-import SQL._
+//import SQL._
 
 object Challenge {
 

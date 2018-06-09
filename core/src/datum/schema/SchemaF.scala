@@ -1,10 +1,10 @@
 package datum.schema
 
 import datum.FoldableFromTraverse
-
 import cats.{Applicative, Traverse}
 import cats.instances.sortedMap._
 import cats.instances.string._
+
 import scala.collection.immutable.SortedMap
 
 sealed trait SchemaF[+R]
