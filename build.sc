@@ -23,6 +23,14 @@ object core extends CommonSettings {
   override def ivyDeps = commonDeps
 }
 
+object streams extends CommonSettings {
+  def ivyDeps = commonDeps ++ Seq(
+    ivy"com.typesafe.akka::akka-stream:2.5.13",
+  )
+
+  def moduleDeps = Seq(core)
+}
+
 object json extends CommonSettings {
   def ivyDeps = commonDeps ++ Seq(
     ivy"com.lihaoyi::ujson:0.6.6"
@@ -42,5 +50,5 @@ object lens extends CommonSettings {
 }
 
 object challenges extends CommonSettings {
-  def moduleDeps = Seq(core, lens)
+  def moduleDeps = Seq(core, lens, json)
 }

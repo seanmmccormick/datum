@@ -47,7 +47,7 @@ load :: () -> Data
 
 What is a csv? How does it relate to `{ [ ... ] }` (ie a js file as in challenge 1)
 
-? :: Path -> Container Schema
-  :: Path -> Container Data
+? :: Path -> Source Schema
+  :: Path -> Source Data
   
 foreach :: (Data -> b) -> Container Data -> Container B  
