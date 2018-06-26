@@ -1,8 +1,8 @@
-package datum
+package datum.red
 
 import cats.instances.order._
 
-import datum.path.Selector
+import datum.red.path.Selector
 import schemes._
 
 import scala.collection.immutable.SortedMap

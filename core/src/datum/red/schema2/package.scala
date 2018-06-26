@@ -1,10 +1,10 @@
-package datum
+package datum.red
 
 import cats.{Applicative, Traverse}
 import cats.instances.order._
 
-import datum.helpers.Algebra
-import datum.path._
+import datum.red.helpers.Algebra
+import datum.red.path._
 import schemes.{Fix, Schemes}
 
 import scala.collection.immutable.SortedMap

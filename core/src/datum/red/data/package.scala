@@ -1,10 +1,10 @@
-package datum
+package datum.red
 
 import cats.Traverse
 import dataum.data._
-import datum.helpers.Algebra
-import datum.located._
-import datum.path._
+import datum.red.helpers.Algebra
+import datum.red.located._
+import datum.red.path._
 
 //import dataum.data._
 //import schemes.Fix
@@ -39,9 +39,9 @@ package object data {
   //implicit val stab: Traverse[LocatedData] = LocatedF.traverse[Value]
 
   val show: Algebra[LocatedF[Value, ?], String] = {
-    case located.RootF(x) => "/" + x
-    case located.StructF(fields) => fields.mkString("\n")
-    case located.ArrayF(cols) => cols.mkString(",")
-    case located.EntryF(x) => x.toString
+    case datum.red.located.RootF(x) => "/" + x
+    case datum.red.located.StructF(fields) => fields.mkString("\n")
+    case datum.red.located.ArrayF(cols) => cols.mkString(",")
+    case datum.red.located.EntryF(x) => x.toString
   }
 }

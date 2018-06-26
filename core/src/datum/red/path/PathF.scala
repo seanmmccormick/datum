@@ -1,4 +1,4 @@
-package datum.path
+package datum.red.path
 
 import cats.{Applicative, Traverse}
 import datum.FoldableFromTraverse

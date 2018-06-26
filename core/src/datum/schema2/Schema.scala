@@ -1,3 +1,0 @@
-package datum.schema2
-
-

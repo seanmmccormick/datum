@@ -1,4 +1,4 @@
-package datum
+package datum.red
 
 object helpers {
 

@@ -1,7 +1,7 @@
-package datum
+package datum.red
 
 import cats.Order
-import datum.helpers.{Algebra, Coalgebra}
+import datum.red.helpers.{Algebra, Coalgebra}
 import schemes._
 
 package object path {

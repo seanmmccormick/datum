@@ -1,4 +1,4 @@
-package datum.schema2
+package datum.red.schema2
 
 sealed trait Description
 case object IntD extends Description

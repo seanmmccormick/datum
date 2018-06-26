@@ -15,6 +15,7 @@ trait CommonSettings extends ScalaModule {
 
   val commonDeps = Agg(
     ivy"io.github.davidgregory084::schemes-core:0.2.0",
+    ivy"org.technomadic::turtles-core:0.1.0",
     ivy"com.lihaoyi::pprint:0.5.2"
   )
 }

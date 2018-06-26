@@ -1,11 +1,11 @@
-package datum.schema2
+package datum.red.schema2
 
 import cats.{Applicative, Traverse}
 import cats.instances.sortedMap._
 import cats.instances.order._
 
 import datum.FoldableFromTraverse
-import datum.path.Selector
+import datum.red.path.Selector
 
 import scala.collection.immutable.SortedMap
 

@@ -1,8 +1,8 @@
-package datum.schema.json
+package datum.red.schema.json
 
-import datum.schema._
-import datum.helpers._
-import datum.schema2
+import datum.red.schema._
+import datum.red.helpers._
+import datum.red.schema2
 import ujson.Js
 
 import scala.collection.immutable.SortedMap

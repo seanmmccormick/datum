@@ -1,4 +1,4 @@
-package datum.schema
+package datum.red.schema
 
 import datum.FoldableFromTraverse
 import cats.{Applicative, Traverse}

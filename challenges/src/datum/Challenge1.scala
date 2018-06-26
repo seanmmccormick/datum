@@ -1,11 +1,11 @@
 package datum
 
 import dataum.data.{IntValue, NoValue, TextValue, Value}
-import datum.data.{Data, LocatedData}
-import datum.helpers.Algebra
-import datum.located
-import datum.path._
-import datum.schema2._
+import datum.red.data.{Data, LocatedData}
+import datum.red.helpers.Algebra
+import datum.red.located
+import datum.red.path._
+import datum.red.schema2._
 import schemes.Schemes
 
 object Challenge1 {
@@ -36,11 +36,11 @@ object Challenge1 {
   val blah = ujson.read(inputjs).arr(0).arr
   println(blah)
 
-  val csvAlg: Algebra[located.LocatedF[Value, ?], List[String]] = {
-    case located.ArrayF(x) => x.map(_.mkString("|"))
-    case located.RootF(r) => r
-    case located.StructF(x) => x.valuesIterator.toList.map(_.mkString("|"))
-    case located.EntryF(v) => v match {
+  val csvAlg: Algebra[datum.red.located.LocatedF[Value, ?], List[String]] = {
+    case datum.red.located.ArrayF(x) => x.map(_.mkString("|"))
+    case datum.red.located.RootF(r) => r
+    case datum.red.located.StructF(x) => x.valuesIterator.toList.map(_.mkString("|"))
+    case datum.red.located.EntryF(v) => v match {
       case TextValue(t) => List(t)
       case IntValue(i) => List(i.toString)
       case NoValue => List("?")
@@ -48,10 +48,10 @@ object Challenge1 {
   }
 
   def save(d: LocatedData): Unit = {
-    val csv = Schemes.cata[located.LocatedF[Value, ?], List[String]](d)(csvAlg)
+    val csv = Schemes.cata[datum.red.located.LocatedF[Value, ?], List[String]](d)(csvAlg)
     println(csv.mkString(","))
   }
-  
+
   def main(args: Array[String]): Unit = {
     println("=== split json into csv === ")
     path.named("name", path.end)
