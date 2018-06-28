@@ -22,6 +22,15 @@ trait CommonSettings extends ScalaModule {
 
 object core extends CommonSettings {
   override def ivyDeps = commonDeps
+
+  object test extends Tests {
+    def ivyDeps = Agg(
+      ivy"org.scalatest::scalatest:3.0.5"
+      //ivy"org.scalacheck::scalacheck:1.14.0"
+    )
+
+    def testFrameworks = Seq("org.scalatest.tools.Framework")
+  }
 }
 
 object streams extends CommonSettings {
