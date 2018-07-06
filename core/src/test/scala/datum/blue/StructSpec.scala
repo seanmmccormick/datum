@@ -27,14 +27,14 @@ class StructSpec extends WordSpec with Matchers {
         )
       )
 
-      val p = fixD.struct(
+      val good = fixD.struct(
         SortedMap(
           "name" -> fixD.text("bob"),
           "age" -> fixD.integer(42)
         )
       )
 
-      Corresponds(person)(p) shouldBe true
+      Corresponds(person)(good) shouldBe true
 
       val bad = fixD.struct(
         SortedMap(
