@@ -4,6 +4,7 @@ import datum.blue.attributes._
 
 import cats.{Applicative, Traverse}
 import cats.instances.list._
+import cats.instances.vector._
 import cats.instances.sortedMap._
 import cats.instances.string._
 import datum.FoldableFromTraverse
@@ -24,8 +25,8 @@ final case class ArrayF[R](
     attributes: Map[AttributeKey, AttributeValue] = Map.empty
 ) extends SchemaF[R]
 
-final case class SequenceF[R](
-    elements: List[R],
+final case class RowF[R](
+    elements: Vector[R],
     attributes: Map[AttributeKey, AttributeValue] = Map.empty
 ) extends SchemaF[R]
 
@@ -46,9 +47,9 @@ object SchemaF {
 
       case v @ ValueF(_, _) => G.pure(v)
 
-      case SequenceF(elems, attrs) =>
-        val tl = Traverse[List].traverse(elems)(f)
-        G.map(tl)(x => SequenceF(x, attrs))
+      case RowF(elems, attrs) =>
+        val tl = Traverse[Vector].traverse(elems)(f)
+        G.map(tl)(x => RowF(x, attrs))
 
       case UnionF(alts, attrs) =>
         val tl = Traverse[List].traverse(alts)(f)

@@ -13,9 +13,9 @@ import scala.collection.immutable.SortedMap
 sealed trait DataF[+R] extends Product with Serializable
 
 final case class StructDataF[R](fields: SortedMap[String, R]) extends DataF[R]
-final case class ArrayDataF[R](values: Vector[R]) extends DataF[R]
+final case class RowDataF[R](values: Vector[R]) extends DataF[R]
 
-// sequence ???
+
 // union ???
 
 final case class OptionalDataF[R](value: Option[R]) extends DataF[R]
@@ -33,9 +33,9 @@ object DataF {
         val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
         G.map(tm)(StructDataF.apply)
 
-      case ArrayDataF(vs) =>
+      case RowDataF(vs) =>
         val tv = Traverse[Vector].traverse(vs)(f)
-        G.map(tv)(ArrayDataF.apply)
+        G.map(tv)(RowDataF.apply)
 
       case OptionalDataF(opt) =>
         val to = Traverse[Option].traverse(opt)(f)
