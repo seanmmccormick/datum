@@ -5,10 +5,9 @@ import turtles.Corecursive
 import scala.collection.immutable.SortedMap
 
 class Specialize[R](implicit R: Corecursive.Aux[R, DataF]) {
-  def struct(
-      fields: SortedMap[String, R]
-  )(implicit R: Corecursive.Aux[R, DataF]): R = {
-    R.embed(StructDataF(fields))
+
+  def struct(fields: (String, R)*): R = {
+    R.embed(StructDataF(SortedMap(fields: _*)))
   }
 
   def row(

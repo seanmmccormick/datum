@@ -15,7 +15,6 @@ sealed trait DataF[+R] extends Product with Serializable
 final case class StructDataF[R](fields: SortedMap[String, R]) extends DataF[R]
 final case class RowDataF[R](values: Vector[R]) extends DataF[R]
 
-
 // union ???
 
 final case class OptionalDataF[R](value: Option[R]) extends DataF[R]
