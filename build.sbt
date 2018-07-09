@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   name := "datum",
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   resolvers += Resolver.sonatypeRepo("releases"),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
   scalacOptions ++= Seq(
@@ -20,6 +20,7 @@ lazy val core = (project in file("core"))
   .settings(
     name := "datum-core",
     libraryDependencies ++= Seq(
+      "org.typelevel" %% "alleycats-core" % "1.1.0",
       "io.github.davidgregory084" %% "schemes-core" % "0.2.0",
       "org.technomadic" %% "turtles-core" % "0.1.0",
       "com.lihaoyi" %% "pprint" % "0.5.2",

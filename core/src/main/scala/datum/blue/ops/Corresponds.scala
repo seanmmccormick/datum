@@ -1,76 +1,92 @@
 package datum.blue.ops
 
-import cats.{Applicative, Monoid}
+import alleycats.Empty
 import datum.blue.data._
 import datum.blue.{attributes, data, schema}
-import datum.blue.schema.{IntegerType, SchemaF, TextType}
+import datum.blue.schema._
 import turtles._
-import cats.syntax.applicative._
+import datum.blue.attributes.{AttributeKey, AttributeValue, Attributes}
 
 object Corresponds {
 
-  type Alg[A] = Algebra[DataF, A]
-  def omg[A](implicit F: Applicative[DataF], A: Monoid[A]): Algebra[SchemaF, Alg[A]] = {
-    case schema.StructF(schemaFields, _) => {
-      case data.StructDataF(dataFields) =>
-        val waaat = schemaFields.map { case (key, ermg) =>
-          val hrm = dataFields.apply(key)
-          ermg(F.pure(hrm))
-        }
-        Monoid[A].combineAll(waaat)
-        ???
+  type =>?[-A, +B] = PartialFunction[A, B]
+
+  def algebra[Data: Empty](
+    check: (DataF[Data], Attributes) =>? Boolean
+  )(implicit Data: Recursive.Aux[Data, DataF]): Algebra[SchemaF, Data => Boolean] = {
+
+    def checkOrDefault(d: DataF[Data], attrs: Attributes, default: Boolean): Boolean = {
+      check.applyOrElse[(DataF[Data], Attributes), Boolean]((d, attrs), _ => default)
+    }
+
+    {
+      case schema.ValueF(TextType, attrs) =>
+        inp =>
+          Data.project(inp) match {
+            case d @ data.TextDataF(_) => checkOrDefault(d, attrs, default = true)
+            case d                     => checkOrDefault(d, attrs, default = false)
+          }
+
+      case schema.ValueF(IntegerType, attrs) =>
+        inp =>
+          Data.project(inp) match {
+            case d @ data.IntegerDataF(_) => checkOrDefault(d, attrs, default = true)
+            case d                        => checkOrDefault(d, attrs, default = false)
+          }
+
+      case schema.ValueF(RealType, attrs) =>
+        inp =>
+          Data.project(inp) match {
+            case d @ data.RealDataF(_) => checkOrDefault(d, attrs, default = true)
+            case d                     => checkOrDefault(d, attrs, default = false)
+          }
+
+      case schema.RowF(elements, attrs) =>
+        inp =>
+          Data.project(inp) match {
+            case d @ RowDataF(values) if values.length == elements.length =>
+              val default = values.zip(elements).forall { case (e, corresponds) => corresponds(e) }
+              checkOrDefault(d, attrs, default)
+            case d => checkOrDefault(d, attrs, default = false)
+          }
+
+      case schema.StructF(fields, attrs) =>
+        inp =>
+          Data.project(inp) match {
+            case d @ StructDataF(dataFields) =>
+              val default = fields.forall {
+                case (key, corresponds) =>
+                  corresponds(dataFields.getOrElse(key, Empty[Data].empty))
+              }
+              checkOrDefault(d, attrs, default)
+
+            case d => checkOrDefault(d, attrs, default = false)
+          }
     }
   }
 
-  def algebra[Data](implicit Data: Recursive.Aux[Data, DataF])
-    : Algebra[SchemaF, Data => Boolean] = {
-    case schema.ValueF(TextType, attrs) =>
-      inp =>
-        Data.project(inp) match {
-          case data.TextDataF(_) => true
-          case _                 => attributes.isOptional(attrs)
-        }
-
-    case schema.ValueF(IntegerType, attrs) =>
-      inp =>
-        Data.project(inp) match {
-          case data.IntegerDataF(_) => true
-          case _                    => attributes.isOptional(attrs)
-        }
-
-    case schema.RowF(elements, attrs) =>
-      inp =>
-        Data.project(inp) match {
-          case RowDataF(values) if values.length == elements.length =>
-            values.zip(elements).forall { case (e, f) => f(e) }
-          case _ => attributes.isOptional(attrs)
-        }
-
-    case schema.StructF(fields, attrs) =>
-      inp =>
-        Data.project(inp) match {
-          case StructDataF(dataFields) =>
-            fields.forall {
-              case (key, corresponds) =>
-                val z = dataFields.getOrElse[Data](key, inp) // this seems silly -- im using inp as substitute for a "null" value
-                corresponds(z)
-            }
-          case _ => attributes.isOptional(attrs)
-        }
-
-    case omg =>
-      println("========== FAILED TO MATCH ==========")
-      pprint.pprintln(omg)
-      x =>
-        false
+  def apply[Data: Empty, Schema](sch: Schema)(data: Data)(
+    implicit Data: Recursive.Aux[Data, DataF],
+    Schema: Recursive.Aux[Schema, SchemaF]
+  ): Boolean = {
+    val f = Schema.cata(sch)(algebra[Data](checks.default))
+    f(data)
   }
 
-  def apply[Data, Schema](sch: Schema)(data: Data)(
-      implicit Data: Recursive.Aux[Data, DataF],
-      Schema: Recursive.Aux[Schema, SchemaF]
+  def partial[Data: Empty, Schema](sch: Schema, data: Data)(
+    checking: PartialFunction[(DataF[Data], Attributes), Boolean])(
+    implicit Data: Recursive.Aux[Data, DataF],
+    Schema: Recursive.Aux[Schema, SchemaF]
   ): Boolean = {
-    println(" ======== START ======")
-    val f = Schema.cata(sch)(algebra[Data](Data))
+    val f = Schema.cata(sch)(algebra[Data](checking))
     f(data)
+  }
+
+  object checks {
+    def optional[Data]: (DataF[Data], Attributes) =>? Boolean = {
+      case (_, attr) if attributes.isOptional(attr) => true
+    }
+
+    def default[Data]: (DataF[Data], Attributes) =>? Boolean = optional
   }
 }

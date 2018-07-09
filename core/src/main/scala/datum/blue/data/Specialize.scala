@@ -27,6 +27,10 @@ class Specialize[R](implicit R: Corecursive.Aux[R, DataF]) {
   def integer(value: Long): R = {
     R.embed(IntegerDataF(value))
   }
+
+  def empty: R = {
+    R.embed(NullDataF)
+  }
 }
 
 object Specialize {
