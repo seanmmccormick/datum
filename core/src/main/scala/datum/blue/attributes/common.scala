@@ -1,4 +1,4 @@
-package datum.blue.meta
+package datum.blue.attributes
 
 object common {
   val optional: AttrKey = AttrKey("optional")

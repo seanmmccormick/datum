@@ -7,37 +7,37 @@ import cats.instances.vector._
 import cats.instances.sortedMap._
 import cats.instances.string._
 import datum.FoldableFromTraverse
-import datum.blue.meta.{AttrKey, Meta}
+import datum.blue.attributes.{AttrKey, Attr}
 
 import scala.collection.immutable.SortedMap
 
 sealed trait SchemaF[+R] extends Product with Serializable {
-  def attributes: Map[AttrKey, Meta]
+  def attributes: Map[AttrKey, Attr]
 }
 
 final case class StructF[R](
   fields: SortedMap[String, R],
-  attributes: Map[AttrKey, Meta] = Map.empty
+  attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[R]
 
 final case class ArrayF[R](
   element: R,
-  attributes: Map[AttrKey, Meta] = Map.empty
+  attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[R]
 
 final case class RowF[R](
   elements: Vector[R],
-  attributes: Map[AttrKey, Meta] = Map.empty
+  attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[R]
 
 final case class UnionF[R](
   alternatives: List[R],
-  attributes: Map[AttrKey, Meta] = Map.empty
+  attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[R]
 
 final case class ValueF(
   tpe: Type,
-  attributes: Map[AttrKey, Meta] = Map.empty
+  attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[Nothing]
 
 object SchemaF {

@@ -1,13 +1,13 @@
 package datum.blue.schema.json
 
-import datum.blue.meta
-import datum.blue.meta._
+import datum.blue.attributes
+import datum.blue.attributes._
 import io.circe._
 import turtles.{Algebra, Recursive}
 
-object MetaWriter {
+object AttributeWriter {
 
-  val algebra: Algebra[MetaF, Json] = {
+  val algebra: Algebra[AttrF, Json] = {
     case BooleanPropertyF(x) => Json.fromBoolean(x)
     case NumericPropertyF(x) => Json.fromDoubleOrNull(x)
     case TextPropertyF(x)    => Json.fromString(x)
@@ -16,7 +16,7 @@ object MetaWriter {
     case AndF(lhs, rhs)      => Json.obj("op" -> Json.fromString("and"), "lhs" -> lhs, "rhs" -> rhs)
   }
 
-  implicit def encoder[R](implicit Meta: Recursive.Aux[R, MetaF]): Encoder[R] = new Encoder[R] {
+  implicit def encoder[R](implicit Meta: Recursive.Aux[R, AttrF]): Encoder[R] = new Encoder[R] {
     override def apply(a: R): Json = Meta.cata(a)(algebra)
   }
 }

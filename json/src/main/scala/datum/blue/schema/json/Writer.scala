@@ -1,8 +1,8 @@
 package datum.blue.schema.json
 
-import datum.blue.meta.AttrKey
+import datum.blue.attributes.AttrKey
 import datum.blue.schema._
-import datum.blue.schema.json.MetaWriter._
+import datum.blue.schema.json.AttributeWriter._
 import io.circe.{Encoder, Json, KeyEncoder}
 import io.circe.syntax._
 import turtles.{Algebra, Recursive}

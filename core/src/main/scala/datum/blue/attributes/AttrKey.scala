@@ -1,3 +1,3 @@
-package datum.blue.meta
+package datum.blue.attributes
 
 final case class AttrKey(value: String) extends AnyVal

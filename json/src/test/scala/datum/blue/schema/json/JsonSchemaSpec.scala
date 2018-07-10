@@ -1,6 +1,6 @@
 package datum.blue.schema.json
 
-import datum.blue.{meta, schema}
+import datum.blue.{attributes, schema}
 import datum.blue.schema.{IntegerType, SchemaF}
 import datum.blue.schema.json.Writer._
 
@@ -18,8 +18,8 @@ class JsonSchemaSpec extends WordSpec with Matchers {
   "schemas" should {
     "be writeable to json" in {
       val person: Fix[SchemaF] = schemaFix.struct(
-        "age" -> schemaFix.value(IntegerType, Map(meta.common.optional -> meta.property(true)))
-      )(Map(meta.AttrKey("foo") -> meta.property("bar")))
+        "age" -> schemaFix.value(IntegerType, Map(attributes.common.optional -> attributes.property(true)))
+      )(Map(attributes.AttrKey("foo") -> attributes.property("bar")))
 
 
       println(person.asJson.spaces2)

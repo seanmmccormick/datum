@@ -40,7 +40,7 @@ class StructSpec extends WordSpec with Matchers {
     "be able to handle optional values" in {
       val person = schemaFix.struct(
         "name" -> schemaFix.value(TextType),
-        "age" -> schemaFix.value(IntegerType, Map(meta.common.optional -> meta.property(true)))
+        "age" -> schemaFix.value(IntegerType, Map(attributes.common.optional -> attributes.property(true)))
       )(Map.empty)
 
       val p = dataFix.struct("name" -> dataFix.text("wat"))

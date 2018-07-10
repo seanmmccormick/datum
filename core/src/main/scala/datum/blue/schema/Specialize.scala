@@ -1,27 +1,26 @@
 package datum.blue.schema
 
-import datum.blue.attributes.{AttributeKey, AttributeValue}
-import datum.blue.meta.MetaMap
+import datum.blue.attributes.Attributes
 import turtles.Corecursive
 
 import scala.collection.immutable.SortedMap
 
 class Specialize[R](implicit R: Corecursive.Aux[R, SchemaF]) {
 
-  def struct(fields: (String, R) *)(attributes: MetaMap): R = {
+  def struct(fields: (String, R) *)(attributes: Attributes): R = {
     R.embed(StructF(SortedMap(fields:_*), attributes))
   }
 
   def row(
       elements: Vector[R],
-      attributes: MetaMap = Map.empty
+      attributes: Attributes = Map.empty
   ): R = {
     R.embed(RowF(elements))
   }
 
   def value(
       tpe: Type,
-      attributes: MetaMap = Map.empty
+      attributes: Attributes = Map.empty
   )(implicit R: Corecursive.Aux[R, SchemaF]): R = {
     R.embed(ValueF(tpe, attributes))
   }

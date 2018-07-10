@@ -7,7 +7,6 @@ lazy val commonSettings = Seq(
     "-Xlint",
     "-deprecation",
     "-unchecked",
-    "-optimise",
     "-Ypartial-unification"
   ),
   libraryDependencies ++= Seq(

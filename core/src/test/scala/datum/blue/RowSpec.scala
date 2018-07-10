@@ -34,7 +34,7 @@ class RowSpec extends WordSpec with Matchers {
 
     "be able to check correspondence with optional values (if the number of columns match)" in {
       val person = fixS.row(
-        Vector(fixS.value(TextType), fixS.value(IntegerType, Map(meta.common.optional -> meta.property(true))))
+        Vector(fixS.value(TextType), fixS.value(IntegerType, Map(attributes.common.optional -> attributes.property(true))))
       )
 
       val p = fixD.row(Vector(fixD.text("wat"), fixD.text("?")))
