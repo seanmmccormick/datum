@@ -16,7 +16,7 @@ object AttributeWriter {
     case AndF(lhs, rhs)      => Json.obj("op" -> Json.fromString("and"), "lhs" -> lhs, "rhs" -> rhs)
   }
 
-  implicit def encoder[R](implicit Meta: Recursive.Aux[R, AttrF]): Encoder[R] = new Encoder[R] {
-    override def apply(a: R): Json = Meta.cata(a)(algebra)
+  implicit def encoder[R](implicit R: Recursive.Aux[R, AttrF]): Encoder[R] = new Encoder[R] {
+    override def apply(a: R): Json = R.cata(a)(algebra)
   }
 }

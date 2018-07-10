@@ -13,7 +13,7 @@ object Writer {
 
   val algebra: Algebra[SchemaF, Json] = {
     case ValueF(typ, attrs) =>
-      Json.obj("value" -> Json.fromString(Type.asString(typ)), "attributes" -> attrs.asJson)
+      Json.obj("type" -> Json.fromString(Type.asString(typ)), "attributes" -> attrs.asJson)
 
     case RowF(elements, attrs) => Json.obj("row" -> elements.asJson, "attributes" -> attrs.asJson)
 
