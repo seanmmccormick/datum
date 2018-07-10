@@ -1,7 +1,7 @@
 package datum.blue
 
-import datum.blue.attributes.{Attributes, Flag, Optional}
 import datum.blue.data.{DataF, TextDataF}
+import datum.blue.meta.MetaMap
 import datum.blue.ops.Corresponds
 import datum.blue.schema.{IntegerType, SchemaF, TextType}
 import org.scalatest.{Matchers, WordSpec}
@@ -39,13 +39,13 @@ class CorrespondsSpec extends WordSpec with Matchers {
 
     "be able to compose the default checks with custom checks" in {
 
-      def onlyBob[Data]: PartialFunction[(DataF[Data], Attributes), Boolean] = {
+      def onlyBob[Data]: PartialFunction[(DataF[Data], MetaMap), Boolean] = {
         case (TextDataF("bob"), _) => true
         case (TextDataF(_), _)     => false
       }
 
       val sch: Fix[SchemaF] = schemaFix.struct(
-        "name" -> schemaFix.value(TextType, Map(Optional -> Flag(true)))
+        "name" -> schemaFix.value(TextType, Map(meta.common.optional -> meta.property(true)))
       )(Map.empty)
 
       val bob = dataFix.struct("name" -> dataFix.text("bob"))

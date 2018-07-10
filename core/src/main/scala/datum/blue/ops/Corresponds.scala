@@ -2,55 +2,55 @@ package datum.blue.ops
 
 import alleycats.Empty
 import datum.blue.data._
-import datum.blue.{attributes, data, schema}
+import datum.blue.{data, meta, schema}
 import datum.blue.schema._
 import turtles._
-import datum.blue.attributes.{AttributeKey, AttributeValue, Attributes}
+import datum.blue.meta.MetaMap
 
 object Corresponds {
 
   type =>?[-A, +B] = PartialFunction[A, B]
 
   def algebra[Data: Empty](
-    check: (DataF[Data], Attributes) =>? Boolean
+    check: (DataF[Data], MetaMap) =>? Boolean
   )(implicit Data: Recursive.Aux[Data, DataF]): Algebra[SchemaF, Data => Boolean] = {
 
-    def checkOrDefault(d: DataF[Data], attrs: Attributes, default: Boolean): Boolean = {
-      check.applyOrElse[(DataF[Data], Attributes), Boolean]((d, attrs), _ => default)
+    def checkOrDefault(d: DataF[Data], attrs: MetaMap, default: Boolean): Boolean = {
+      check.applyOrElse[(DataF[Data], MetaMap), Boolean]((d, attrs), _ => default)
     }
 
     {
-      case schema.ValueF(TextType, attrs) =>
+      case schema.ValueF(TextType, meta) =>
         inp =>
           Data.project(inp) match {
-            case d @ data.TextDataF(_) => checkOrDefault(d, attrs, default = true)
-            case d                     => checkOrDefault(d, attrs, default = false)
+            case d @ data.TextDataF(_) => checkOrDefault(d, meta, default = true)
+            case d                     => checkOrDefault(d, meta, default = false)
           }
 
-      case schema.ValueF(IntegerType, attrs) =>
+      case schema.ValueF(IntegerType, meta) =>
         inp =>
           Data.project(inp) match {
-            case d @ data.IntegerDataF(_) => checkOrDefault(d, attrs, default = true)
-            case d                        => checkOrDefault(d, attrs, default = false)
+            case d @ data.IntegerDataF(_) => checkOrDefault(d, meta, default = true)
+            case d                        => checkOrDefault(d, meta, default = false)
           }
 
-      case schema.ValueF(RealType, attrs) =>
+      case schema.ValueF(RealType, meta) =>
         inp =>
           Data.project(inp) match {
-            case d @ data.RealDataF(_) => checkOrDefault(d, attrs, default = true)
-            case d                     => checkOrDefault(d, attrs, default = false)
+            case d @ data.RealDataF(_) => checkOrDefault(d, meta, default = true)
+            case d                     => checkOrDefault(d, meta, default = false)
           }
 
-      case schema.RowF(elements, attrs) =>
+      case schema.RowF(elements, meta) =>
         inp =>
           Data.project(inp) match {
             case d @ RowDataF(values) if values.length == elements.length =>
               val default = values.zip(elements).forall { case (e, corresponds) => corresponds(e) }
-              checkOrDefault(d, attrs, default)
-            case d => checkOrDefault(d, attrs, default = false)
+              checkOrDefault(d, meta, default)
+            case d => checkOrDefault(d, meta, default = false)
           }
 
-      case schema.StructF(fields, attrs) =>
+      case schema.StructF(fields, meta) =>
         inp =>
           Data.project(inp) match {
             case d @ StructDataF(dataFields) =>
@@ -58,9 +58,9 @@ object Corresponds {
                 case (key, corresponds) =>
                   corresponds(dataFields.getOrElse(key, Empty[Data].empty))
               }
-              checkOrDefault(d, attrs, default)
+              checkOrDefault(d, meta, default)
 
-            case d => checkOrDefault(d, attrs, default = false)
+            case d => checkOrDefault(d, meta, default = false)
           }
     }
   }
@@ -74,7 +74,7 @@ object Corresponds {
   }
 
   def partial[Data: Empty, Schema](sch: Schema, data: Data)(
-    checking: PartialFunction[(DataF[Data], Attributes), Boolean])(
+    checking: PartialFunction[(DataF[Data], MetaMap), Boolean])(
     implicit Data: Recursive.Aux[Data, DataF],
     Schema: Recursive.Aux[Schema, SchemaF]
   ): Boolean = {
@@ -83,10 +83,11 @@ object Corresponds {
   }
 
   object checks {
-    def optional[Data]: (DataF[Data], Attributes) =>? Boolean = {
-      case (_, attr) if attributes.isOptional(attr) => true
+    def optional[Data]: (DataF[Data], MetaMap) =>? Boolean = {
+      //case (_, attr) if attributes.isOptional(attr) => true
+      case (_, attr) if meta.isOptional(attr) => true
     }
 
-    def default[Data]: (DataF[Data], Attributes) =>? Boolean = optional
+    def default[Data]: (DataF[Data], MetaMap) =>? Boolean = optional
   }
 }
