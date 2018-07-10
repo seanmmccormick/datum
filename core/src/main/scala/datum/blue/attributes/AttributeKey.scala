@@ -1,6 +1,6 @@
 package datum.blue.attributes
 
-trait AttributeKey extends Product with Serializable
+sealed trait AttributeKey extends Product with Serializable
 
 final case class Key(value: String) extends AttributeKey
 

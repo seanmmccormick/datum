@@ -9,11 +9,16 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-optimise",
     "-Ypartial-unification"
+  ),
+  libraryDependencies ++= Seq(
+    "org.technomadic" %% "turtles-core" % "0.1.0",
+    "com.lihaoyi" %% "pprint" % "0.5.2",
+    "org.scalatest" %% "scalatest" % "3.0.5" % Test
   )
 )
 
 lazy val root = (project in file("."))
-  .aggregate(core)
+  .aggregate(core, json)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings)
@@ -27,3 +32,15 @@ lazy val core = (project in file("core"))
       "org.scalatest" %% "scalatest" % "3.0.5" % Test
     )
   )
+
+lazy val json = (project in file("json"))
+  .settings(commonSettings)
+  .settings(
+    name := "datum-json",
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" %  "0.9.3",
+      "io.circe" %% "circe-parser" %  "0.9.3"
+    )
+  )
+  .dependsOn(core)
+
