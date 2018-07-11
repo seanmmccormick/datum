@@ -12,12 +12,15 @@ object Writer {
   implicit val keyEncAttr: KeyEncoder[AttrKey] = KeyEncoder.instance(_.value)
 
   val algebra: Algebra[SchemaF, Json] = {
-    case ValueF(typ, attrs) =>
+    case ValueF(typ, attrs) if attrs.nonEmpty =>
       Json.obj("type" -> Json.fromString(Type.asString(typ)), "attributes" -> attrs.asJson)
+    case ValueF(typ, _) => Json.obj("type" -> Json.fromString(Type.asString(typ)))
 
-    case RowF(elements, attrs) => Json.obj("row" -> elements.asJson, "attributes" -> attrs.asJson)
+    case RowF(elements, attrs) if attrs.nonEmpty => Json.obj("row" -> elements.asJson, "attributes" -> attrs.asJson)
+    case RowF(elements, _)                       => Json.obj("row" -> elements.asJson)
 
-    case StructF(fields, attrs) => Json.obj("struct" -> fields.asJson, "attributes" -> attrs.asJson)
+    case StructF(fields, attrs) if attrs.nonEmpty => Json.obj("struct" -> fields.asJson, "attributes" -> attrs.asJson)
+    case StructF(fields, _)                       => Json.obj("struct" -> fields.asJson)
 
   }
 

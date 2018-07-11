@@ -14,7 +14,7 @@ import scala.collection.immutable.SortedMap
 
 object Reader {
 
-  implicit val zz: KeyDecoder[AttrKey] = KeyDecoder.instance(x => Some(AttrKey(x)))
+  implicit val readAttrKey: KeyDecoder[AttrKey] = KeyDecoder.instance(x => Some(AttrKey(x)))
 
   implicit val readAttr: Decoder[Attr] = AttributeReader.decoder[Attr]
 
@@ -25,14 +25,24 @@ object Reader {
     case cur if cur.value.isObject && cur.value.asObject.exists(_.contains("type")) =>
       for {
         typ <- cur.downField("type").as[Type]
-        attrs <- cur.downField("attributes").as[Map[AttrKey, Attr]]
-      } yield ValueF(typ, attrs)
+        attrs <- cur.downField("attributes").as[Option[Map[AttrKey, Attr]]]
+      } yield {
+        ValueF(typ, attrs.getOrElse(Map.empty))
+      }
 
     case cur if cur.value.isObject && cur.value.asObject.exists(_.contains("struct")) =>
       for {
         elements <- cur.downField("struct").as[SortedMap[String, HCursor]]
-        attrs <- cur.downField("attributes").as[Map[AttrKey, Attr]]
-      } yield StructF(elements, attrs)
+        attrs <- cur.downField("attributes").as[Option[Map[AttrKey, Attr]]]
+      } yield StructF(elements, attrs.getOrElse(Map.empty))
+
+    case cur if cur.value.isObject && cur.value.asObject.exists(_.contains("row")) =>
+      for {
+        elements <- cur.downField("row").as[Vector[HCursor]]
+        attrs <- cur.downField("attributes").as[Option[Map[AttrKey, Attr]]]
+      } yield RowF(elements, attrs.getOrElse(Map.empty))
+
+    case err => Left(DecodingFailure.apply("Invalid Schema Type", err.history))
   }
 
   implicit def decoder[R](implicit R: Corecursive.Aux[R, SchemaF]): Decoder[R] = new Decoder[R] {

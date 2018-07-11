@@ -16,11 +16,9 @@ class RowSpec extends WordSpec with Matchers {
     "be able to check correspondence of a simple list schema" in {
 
       val person = fixS.row(
-        Vector(
-          fixS.value(TextType),
-          fixS.value(IntegerType)
-        )
-      )
+        fixS.value(TextType),
+        fixS.value(IntegerType)
+      )()
 
       val p = fixD.row(
         Vector(
@@ -34,8 +32,9 @@ class RowSpec extends WordSpec with Matchers {
 
     "be able to check correspondence with optional values (if the number of columns match)" in {
       val person = fixS.row(
-        Vector(fixS.value(TextType), fixS.value(IntegerType, Map(attributes.common.optional -> attributes.property(true))))
-      )
+        fixS.value(TextType),
+        fixS.value(IntegerType, Map(attributes.common.optional -> attributes.property(true)))
+      )()
 
       val p = fixD.row(Vector(fixD.text("wat"), fixD.text("?")))
 

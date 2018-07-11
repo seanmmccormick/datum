@@ -7,20 +7,17 @@ import scala.collection.immutable.SortedMap
 
 class Specialize[R](implicit R: Corecursive.Aux[R, SchemaF]) {
 
-  def struct(fields: (String, R) *)(attributes: Attributes): R = {
-    R.embed(StructF(SortedMap(fields:_*), attributes))
+  def struct(fields: (String, R)*)(attributes: Attributes): R = {
+    R.embed(StructF(SortedMap(fields: _*), attributes))
   }
 
-  def row(
-      elements: Vector[R],
-      attributes: Attributes = Map.empty
-  ): R = {
-    R.embed(RowF(elements))
+  def row(elements: R*)(attributes: Attributes = Map.empty): R = {
+    R.embed(RowF(Vector(elements:_*)))
   }
 
   def value(
-      tpe: Type,
-      attributes: Attributes = Map.empty
+    tpe: Type,
+    attributes: Attributes = Map.empty
   )(implicit R: Corecursive.Aux[R, SchemaF]): R = {
     R.embed(ValueF(tpe, attributes))
   }
