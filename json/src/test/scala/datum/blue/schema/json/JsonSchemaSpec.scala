@@ -2,6 +2,7 @@ package datum.blue.schema.json
 
 import datum.blue.{attributes, schema}
 import datum.blue.schema.{IntegerType, RealType, SchemaF, TextType}
+import datum.blue.ops
 import datum.blue.schema.json.Writer._
 import datum.blue.schema.json.Reader._
 import org.scalatest.{Matchers, WordSpec}

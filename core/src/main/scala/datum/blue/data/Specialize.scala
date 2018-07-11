@@ -28,6 +28,10 @@ class Specialize[R](implicit R: Corecursive.Aux[R, DataF]) {
     R.embed(IntegerDataF(value))
   }
 
+  def boolean(value: Boolean): R = {
+    R.embed(BooleanDataF(value))
+  }
+
   def empty: R = {
     R.embed(NullDataF)
   }

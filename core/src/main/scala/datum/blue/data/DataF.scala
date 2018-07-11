@@ -23,6 +23,7 @@ final case class RowDataF[R](values: Vector[R]) extends DataF[R]
 final case class IntegerDataF(value: Long) extends DataF[Nothing]
 final case class RealDataF(value: Double) extends DataF[Nothing]
 final case class TextDataF(value: String) extends DataF[Nothing]
+final case class BooleanDataF(value: Boolean) extends DataF[Nothing]
 
 case object NullDataF extends DataF[Nothing]
 
@@ -47,6 +48,7 @@ object DataF {
       case v @ IntegerDataF(_) => G.pure(v)
       case v @ RealDataF(_)    => G.pure(v)
       case v @ TextDataF(_)    => G.pure(v)
+      case v @ BooleanDataF(_) => G.pure(v)
       case n @ NullDataF       => G.pure(n)
 
     }
