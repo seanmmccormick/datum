@@ -29,25 +29,24 @@ object Parse2 {
 
     override def onStruct(fields: SortedMap[String, Json => Result[Data]]): Json => Result[Data] =
       _.as[JsonObject].flatMap { obj =>
-        var error: Option[String] = None
-        pprint.pprintln(fields)
+        var error: Option[DecodingFailure] = None
         val collected = fields.iterator
           .map {
             case (k, func) =>
               val selected = obj(k).getOrElse(Json.Null)
               (k, func(selected))
           }
-          .foldLeft(SortedMap.empty[String, Data]) {
+          .foldLeft(SortedMap.newBuilder[String, Data]) {
             case (acc, (k, Right(d))) =>
-              acc + (k -> d)
+              acc += (k -> d)
 
-            case (_, (err, _)) =>
-              error = Some(err)
-              SortedMap.empty
+            case (acc, (k, Left(err))) =>
+              error = Some(DecodingFailure(s"Error for key: $k (error was: ${err.message})", err.history))
+              acc
           }
 
-        if (error.isDefined) Left(DecodingFailure(s"Missing expected key: ${error.get}", List.empty))
-        else Right(Data.embed(StructDataF(collected)))
+        if (error.isDefined) Left(error.get)
+        else Right(Data.embed(StructDataF(collected.result())))
       }
   }
 
