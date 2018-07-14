@@ -4,9 +4,6 @@ import datum.blue.schema
 import datum.blue.transform
 import datum.blue.transform.TransformF
 import turtles.{Algebra, Birecursive, Recursive}
-import cats.syntax.traverse._
-import cats.instances.list._
-import cats.instances.option._
 import datum.blue.schema.SchemaF
 
 import scala.collection.immutable.SortedMap
@@ -22,25 +19,18 @@ object TransformSchema {
       _ =>
         Option.empty
 
-    case transform.StructF(fields) =>
+    case transform.StructF(transforms) =>
       inp =>
         Schema.project(inp) match {
           case schema.StructF(inpFields, attrs) =>
-//            fields.toList
-//              .traverse[Option, (String, Schema)] {
-//                case (k, v) =>
-//                  inpFields.get(k).flatMap(v).map((k, _))
-//              }
-//              .map { collected =>
-//                Schema.embed(schema.StructF(SortedMap(collected: _*), attrs))
-//              }
             val collected = inpFields.toList.flatMap {
               case (k, v) =>
-                fields
-                  .get(k)
-                  .flatMap(transformFunc => transformFunc(v))
-                  .orElse { if (keepByDefault) Some(v) else None }
-                  .map((k, _))
+                val r = transforms.get(k) match {
+                  case Some(tf) => tf(v)
+                  case None if keepByDefault => Some(v)
+                  case _ => None
+                }
+                r.map((k, _))
             }
             Some(Schema.embed(schema.StructF(SortedMap(collected: _*), attrs)))
 
@@ -57,11 +47,11 @@ object TransformSchema {
         }
   }
 
-  def apply[Transform, Schema](transform: Transform)(sch: Schema)(
+  def apply[Transform, Schema](transform: Transform, keepByDefault: Boolean = false)(sch: Schema)(
     implicit Transform: Recursive.Aux[Transform, TransformF],
     Schema: Birecursive.Aux[Schema, SchemaF]
   ): Option[Schema] = {
-    val f = Transform.cata(transform)(algebra())
+    val f = Transform.cata(transform)(algebra(keepByDefault))
     f(sch)
   }
 }
