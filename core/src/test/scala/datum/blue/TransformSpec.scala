@@ -1,19 +1,12 @@
 package datum.blue
 
-import datum.blue.schema.{IntegerType, SchemaF, TextType}
+import datum.blue.schema.{Column, IntegerType, SchemaF, TextType}
 import datum.blue.transform.TransformF
 import org.scalatest.{Matchers, WordSpec}
-import turtles.{Algebra, Birecursive}
 import turtles.data.Fix
-import cats.instances.sortedMap._
-import cats.instances.string._
-import cats.instances.option._
-import cats.instances.list._
-import cats.syntax.traverse._
 import datum.blue.data.DataF
 import datum.blue.ops.{TransformData, TransformSchema}
 
-import scala.collection.immutable.SortedMap
 
 class TransformSpec extends WordSpec with Matchers {
 
@@ -56,7 +49,7 @@ class TransformSpec extends WordSpec with Matchers {
       )
 
       TransformSchema(explode)(person) shouldBe Some(
-        sch.row(sch.value(TextType), sch.value(TextType))()
+        sch.row(Column(sch.value(TextType), Some("food")), Column(sch.value(TextType), Some("name")))()
       )
     }
 

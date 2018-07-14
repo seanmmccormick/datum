@@ -26,7 +26,7 @@ final case class ArrayF[R](
 ) extends SchemaF[R]
 
 final case class RowF[R](
-  elements: Vector[R],
+  elements: Vector[Column[R]],
   attributes: Map[AttrKey, Attr] = Map.empty
 ) extends SchemaF[R]
 
@@ -47,9 +47,11 @@ object SchemaF {
 
         case v @ ValueF(_, _) => G.pure(v)
 
-        case RowF(elems, meta) =>
-          val tl = Traverse[Vector].traverse(elems)(f)
-          G.map(tl)(x => RowF(x, meta))
+        case RowF(elems, attrs) =>
+          val tl = Traverse[Vector].traverse(elems) { e =>
+            G.map(f(e.value))(Column.apply(_, e.header))
+          }
+          G.map(tl)(x => RowF(x, attrs))
 
         case UnionF(alts, meta) =>
           val tl = Traverse[List].traverse(alts)(f)

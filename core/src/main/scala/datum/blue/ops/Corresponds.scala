@@ -45,7 +45,7 @@ object Corresponds {
         inp =>
           Data.project(inp) match {
             case d @ RowDataF(values) if values.length == elements.length =>
-              val default = values.zip(elements).forall { case (e, corresponds) => corresponds(e) }
+              val default = values.zip(elements).forall { case (e, col) => col.value(e) }
               checkOrDefault(d, meta, default)
             case d => checkOrDefault(d, meta, default = false)
           }

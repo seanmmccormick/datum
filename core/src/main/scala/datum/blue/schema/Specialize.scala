@@ -11,7 +11,7 @@ class Specialize[R](implicit R: Corecursive.Aux[R, SchemaF]) {
     R.embed(StructF(SortedMap(fields: _*), attributes))
   }
 
-  def row(elements: R*)(attributes: Attributes = Map.empty): R = {
+  def row(elements: Column[R]*)(attributes: Attributes = Map.empty): R = {
     R.embed(RowF(Vector(elements:_*)))
   }
 

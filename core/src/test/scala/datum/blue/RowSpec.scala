@@ -2,7 +2,7 @@ package datum.blue
 
 import datum.blue.data.DataF
 import datum.blue.ops.Corresponds
-import datum.blue.schema.{IntegerType, SchemaF, TextType}
+import datum.blue.schema.{Column, IntegerType, SchemaF, TextType}
 import org.scalatest.{Matchers, WordSpec}
 import turtles.data.Fix
 
@@ -16,8 +16,8 @@ class RowSpec extends WordSpec with Matchers {
     "be able to check correspondence of a simple list schema" in {
 
       val person = fixS.row(
-        fixS.value(TextType),
-        fixS.value(IntegerType)
+        Column(fixS.value(TextType), Some("name")),
+        Column(fixS.value(IntegerType), Some("age"))
       )()
 
       val p = fixD.row(
@@ -27,13 +27,14 @@ class RowSpec extends WordSpec with Matchers {
         )
       )
 
+      println(datum.blue.ops.TablePrint(person, List(p,p,p)))
       Corresponds(person)(p) shouldBe true
     }
 
     "be able to check correspondence with optional values (if the number of columns match)" in {
       val person = fixS.row(
-        fixS.value(TextType),
-        fixS.value(IntegerType, Map(attributes.common.optional -> attributes.property(true)))
+        Column(fixS.value(TextType)),
+        Column(fixS.value(IntegerType, Map(attributes.common.optional -> attributes.property(true))))
       )()
 
       val p = fixD.row(Vector(fixD.text("wat"), fixD.text("?")))

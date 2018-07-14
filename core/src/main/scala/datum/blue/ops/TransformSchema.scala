@@ -4,7 +4,7 @@ import datum.blue.schema
 import datum.blue.transform
 import datum.blue.transform.TransformF
 import turtles.{Algebra, Birecursive, Recursive}
-import datum.blue.schema.SchemaF
+import datum.blue.schema.{Column, SchemaF}
 
 import scala.collection.immutable.SortedMap
 
@@ -41,7 +41,9 @@ object TransformSchema {
       inp =>
         f(inp).flatMap { sch =>
           Schema.project(sch) match {
-            case schema.StructF(fields, attrs) => Option(Schema.embed(schema.RowF(fields.values.toVector, attrs)))
+            case schema.StructF(fields, attrs) =>
+              val cols = fields.map { case (k, v) => Column(v, Option(k)) }
+              Option(Schema.embed(schema.RowF(cols.toVector, attrs)))
             case _                             => None
           }
         }
