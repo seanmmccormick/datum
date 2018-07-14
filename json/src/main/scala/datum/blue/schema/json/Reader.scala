@@ -21,6 +21,14 @@ object Reader {
   implicit val readType: Decoder[Type] =
     Decoder.decodeString.emap(t => Type.fromString(t).toRight(s"Invalid Schema Value Type! (${t.take(10)})"))
 
+  implicit val readColumn: Decoder[Column[HCursor]] =
+    Decoder[Map[String, HCursor]].emap { col =>
+      col.get("value").map { v =>
+        val header = col.get("header").flatMap(_.value.asString)
+        Right(Column(v, header))
+      }.getOrElse(Left("Invalid Column Schema: Missing 'value'!"))
+    }
+
   def coalgebra[R](implicit R: Corecursive.Aux[R, SchemaF]): CoalgebraM[Result, SchemaF, HCursor] = {
     case cur if cur.value.isObject && cur.value.asObject.exists(_.contains("type")) =>
       for {
@@ -38,7 +46,7 @@ object Reader {
 
     case cur if cur.value.isObject && cur.value.asObject.exists(_.contains("row")) =>
       for {
-        elements <- cur.downField("row").as[Vector[HCursor]]
+        elements <- cur.downField("row").as[Vector[Column[HCursor]]]
         attrs <- cur.downField("attributes").as[Option[Map[AttrKey, Attr]]]
       } yield RowF(elements, attrs.getOrElse(Map.empty))
 

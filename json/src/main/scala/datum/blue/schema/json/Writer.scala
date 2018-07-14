@@ -11,6 +11,10 @@ object Writer {
 
   implicit val keyEncAttr: KeyEncoder[AttrKey] = KeyEncoder.instance(_.value)
 
+  implicit val columnEnc: Encoder[Column[Json]] = Encoder[Map[String, Json]].contramap { col =>
+    Map("header" -> col.header.asJson, "value" -> col.value)
+  }
+
   val algebra: Algebra[SchemaF, Json] = {
     case ValueF(typ, attrs) if attrs.nonEmpty =>
       Json.obj("type" -> Json.fromString(Type.asString(typ)), "attributes" -> attrs.asJson)

@@ -1,0 +1,23 @@
+{
+  "struct" : {
+    "id" : {
+      "type": "integer"
+    }
+    "age" : {
+      "type" : "integer"
+    },
+    "name" : {
+      "type" : "text"
+    },
+    "school" : {
+      "struct" : {
+        "school_id" : {
+          "type" : "integer"
+        },
+        "school_name" : {
+          "type" : "text"
+        }
+      }
+    }
+  }
+}

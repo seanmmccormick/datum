@@ -39,7 +39,7 @@ object TablePrint {
     case IntegerDataF(v) => Vector(v.toString)
     case BooleanDataF(v) => Vector(v.toString)
     case RealDataF(d)    => Vector(f"$d%.3f")
-    case StructDataF(v)  => Vector("{ " + v.map { case (k, v) => s"\"$k\": \"$v\""}.mkString(", ") + "}")
+    case StructDataF(v)  => Vector( "{ " + v.map { case (k, v) => s"'$k': '$v'"}.mkString(", ") + "}")
     case RowDataF(cols)  => cols.flatten
   }
 
@@ -56,7 +56,7 @@ object TablePrint {
                                                         Schema: Recursive.Aux[Schema, SchemaF]): String = {
     val header = Schema.cata(sch)(headerAlg)
     val collected = inp.map { d =>
-      Data.cata(d)(algebra(_ => Vector.empty))
+      Data.cata(d)(algebra)
     }
 
     Tabulator.format(header :: collected)

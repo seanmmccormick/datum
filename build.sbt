@@ -37,9 +37,21 @@ lazy val json = (project in file("json"))
   .settings(
     name := "datum-json",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" %  "0.9.3",
-      "io.circe" %% "circe-parser" %  "0.9.3"
+      "io.circe" %% "circe-core" % "0.9.3",
+      "io.circe" %% "circe-parser" % "0.9.3"
     )
   )
   .dependsOn(core)
 
+lazy val demo = (project in file("demo"))
+  .settings(commonSettings)
+  .settings(
+    fork := true,
+    outputStrategy := Some(StdoutOutput),
+    name := "datum-demo",
+    libraryDependencies ++= Seq(
+      "com.github.alexarchambault" %% "case-app" % "2.0.0-M3",
+      "com.lihaoyi" %% "ammonite-ops" % "1.1.2"
+    )
+  )
+  .dependsOn(core, json)

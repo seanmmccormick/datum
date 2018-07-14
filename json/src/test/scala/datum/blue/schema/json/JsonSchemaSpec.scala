@@ -1,7 +1,7 @@
 package datum.blue.schema.json
 
 import datum.blue.{attributes, schema}
-import datum.blue.schema.{IntegerType, RealType, SchemaF, TextType}
+import datum.blue.schema._
 import datum.blue.ops
 import datum.blue.schema.json.Writer._
 import datum.blue.schema.json.Reader._
@@ -21,9 +21,9 @@ class JsonSchemaSpec extends WordSpec with Matchers {
   )(Map(attributes.AttrKey("foo") -> attributes.property("bar")))
 
   val timeseries: Fix[SchemaF] = schemaFix.row(
-    schemaFix.value(TextType),
-    schemaFix.value(RealType),
-    schemaFix.value(TextType)
+    Column(schemaFix.value(TextType)),
+    Column(schemaFix.value(RealType)),
+    Column(schemaFix.value(TextType))
   )(Map.empty)
 
   "schemas" should {

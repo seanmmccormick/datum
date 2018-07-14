@@ -1,0 +1,5 @@
+{"id":1, "name":"bob", "age":42, "school": {"school_id":576, "school_name": "suny"}}
+{"id":2, "name":"tony", "age":40, "school": {"school_id":123, "school_name": "mit"}}
+{"id":3, "name":"thor", "age":40, "school": {"school_id":345, "school_name": "au"}}
+{"id":4, "name":"bruce", "age":35, "school": {"school_id":123, "school_name": "mit"}}
+{"id":5, "name":"steve", "age":100, "school": {"school_id":576, "school_name": "suny"}}
