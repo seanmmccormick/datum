@@ -7,7 +7,6 @@ import turtles.data.Fix
 import datum.blue.data.DataF
 import datum.blue.ops.{TransformData, TransformSchema}
 
-
 class TransformSpec extends WordSpec with Matchers {
 
   private val sch: schema.Specialize[Fix[SchemaF]] =
@@ -23,6 +22,17 @@ class TransformSpec extends WordSpec with Matchers {
     "name" -> sch.value(TextType),
     "age" -> sch.value(IntegerType),
     "food" -> sch.value(TextType)
+  )(Map.empty)
+
+  private val nested = sch.struct(
+    "inner" -> sch.struct(
+      "foo" -> sch.value(IntegerType),
+      "bar" -> sch.value(IntegerType),
+      "baz" -> sch.value(IntegerType),
+      "deeper" -> sch.struct(
+        "moreinner" -> sch.value(TextType)
+      )(Map.empty)
+    )(Map.empty)
   )(Map.empty)
 
   "transforms" should {
@@ -61,6 +71,25 @@ class TransformSpec extends WordSpec with Matchers {
       TransformSchema(kept, keepByDefault = true)(person) shouldBe Some(
         sch.struct("name" -> sch.value(TextType), "age" -> sch.value(IntegerType))(Map.empty)
       )
+    }
+
+    "be able to select out sub structs" in {
+
+      val select = trn.select("inner", trn.struct("foo" -> trn.keep, "bar" -> trn.keep))
+
+      TransformSchema(select)(nested) shouldBe Some(
+        sch.struct("foo" -> sch.value(IntegerType), "bar" -> sch.value(IntegerType))(Map.empty)
+      )
+    }
+
+    "be able to select down multiple levels" in {
+      val test =
+        trn.explode(trn.select("inner", trn.struct("foo" -> trn.keep, "deeper" -> trn.select("moreinner", trn.keep))))
+
+      pprint.pprintln(TransformSchema(test)(nested))
+      pprint.pprintln(TransformSchema(test)(nested))
+      pprint.pprintln(TransformSchema(test)(nested))
+      pprint.pprintln(TransformSchema(test)(nested))
     }
 
     "be able to transform data" in {

@@ -2,8 +2,6 @@ package datum.blue.ops
 
 import datum.blue.data
 import datum.blue.data.DataF
-import datum.blue.ops.TransformSchema.algebra
-import datum.blue.schema.SchemaF
 import datum.blue.transform
 import datum.blue.transform.TransformF
 import turtles.{Algebra, Birecursive, Recursive}
@@ -17,23 +15,44 @@ object TransformData {
   ): Algebra[transform.TransformF, Data => Option[Data]] = {
     case transform.KeepF => Option.apply
 
-    case transform.DropF => _ => Option.empty
+    case transform.DropF =>
+      _ =>
+        Option.empty
 
-    case transform.StructF(transforms) => inp => Data.project(inp) match {
-      case data.StructDataF(fields) =>
-        val collected = fields.toList.flatMap {
-          case (k, v) =>
-            val r = transforms.get(k) match {
-              case Some(tf) => tf(v)
-              case None if keepByDefault => Some(v)
-              case _ => None
-            }
-            r.map((k, _))
+    case transform.SelectFieldF(field, v) =>
+      inp =>
+        Data.project(inp) match {
+          case data.StructDataF(fields) => fields.get(field).flatMap(v)
+          case _                        => None
         }
-        Some(Data.embed(data.StructDataF(SortedMap(collected: _*))))
 
-      case _ => None
-    }
+    case transform.StructF(transforms) =>
+      inp =>
+        Data.project(inp) match {
+          case data.StructDataF(fields) =>
+            val collected = fields.toList.flatMap {
+              case (k, v) =>
+                val r = transforms.get(k) match {
+                  case Some(tf)              => tf(v)
+                  case None if keepByDefault => Some(v)
+                  case _                     => None
+                }
+                r.map((k, _))
+            }
+            Some(Data.embed(data.StructDataF(SortedMap(collected: _*))))
+
+          case _ => None
+        }
+
+    case transform.ExplodeF(f) =>
+      inp =>
+        f(inp).flatMap { d =>
+          Data.project(d) match {
+            case data.StructDataF(fields) =>
+              Option(Data.embed(data.RowDataF(fields.values.toVector)))
+            case _ => None
+          }
+        }
   }
 
   def apply[Transform, Data](transform: Transform, keepByDefault: Boolean = false)(dat: Data)(

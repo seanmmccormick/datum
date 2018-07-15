@@ -1,0 +1,8 @@
+{
+  "explode" : {
+    "select" : {
+      "field" : "school",
+      "target" : "keep"
+    }
+  }
+}

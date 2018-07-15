@@ -26,15 +26,22 @@ object TransformSchema {
             val collected = inpFields.toList.flatMap {
               case (k, v) =>
                 val r = transforms.get(k) match {
-                  case Some(tf) => tf(v)
+                  case Some(tf)              => tf(v)
                   case None if keepByDefault => Some(v)
-                  case _ => None
+                  case _                     => None
                 }
                 r.map((k, _))
             }
             Some(Schema.embed(schema.StructF(SortedMap(collected: _*), attrs)))
 
           case _ => None
+        }
+
+    case transform.SelectFieldF(field, trg) =>
+      inp =>
+        Schema.project(inp) match {
+          case schema.StructF(inpFields, attrs) => inpFields.get(field).flatMap(trg)
+          case _                                => None
         }
 
     case transform.ExplodeF(f) =>
@@ -44,7 +51,7 @@ object TransformSchema {
             case schema.StructF(fields, attrs) =>
               val cols = fields.map { case (k, v) => Column(v, Option(k)) }
               Option(Schema.embed(schema.RowF(cols.toVector, attrs)))
-            case _                             => None
+            case _ => None
           }
         }
   }

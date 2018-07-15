@@ -28,7 +28,7 @@ class WatSpec extends WordSpec with Matchers {
       }
 
       val neat = parse("""{"omg":false, "name":"bob"}""").flatMap { js =>
-        schema.json.Parse2(sample, js)(schema.json.checks.optional)
+        schema.json.Parse2(sample)(schema.json.checks.optional)(js)
         //schema.json.Parse2(sample, js)(PartialFunction.empty)
       }
       pprint.pprintln(neat)

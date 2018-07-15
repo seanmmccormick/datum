@@ -2,7 +2,7 @@
   "struct" : {
     "id" : {
       "type": "integer"
-    }
+    },
     "age" : {
       "type" : "integer"
     },

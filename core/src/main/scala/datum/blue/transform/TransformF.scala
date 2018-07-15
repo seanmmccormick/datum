@@ -15,6 +15,8 @@ final case class StructF[R](
 
 //final case class TransformRowF[R](elements: Vector[R]) extends TransformF[R]
 
+final case class SelectFieldF[R](field: String, target: R) extends TransformF[R]
+
 final case class ExplodeF[R](target: R) extends TransformF[R]
 
 final case class RenameF[R](to: String, target: R) extends TransformF[R]
@@ -28,12 +30,17 @@ object TransformF {
     override def traverse[G[_], A, B](fa: TransformF[A])(f: A => G[B])(implicit G: Applicative[G]): G[TransformF[B]] = {
       fa match {
         case DropF => G.pure(DropF)
+
         case KeepF => G.pure(KeepF)
+
         case r @ RenameF(to, trg) =>
           G.map(f(trg)) { b =>
             RenameF(to, b)
           }
         case ExplodeF(trg) => G.map(f(trg))(ExplodeF.apply)
+
+        case SelectFieldF(field, trg) => G.map(f(trg))(SelectFieldF(field, _))
+
         case StructF(fields) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
           G.map(tm)(StructF.apply)
