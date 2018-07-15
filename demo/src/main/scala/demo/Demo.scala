@@ -29,7 +29,9 @@ import io.circe.Decoder.Result
 sealed trait DemoCommand
 
 case class Show(
-  file: String,
+  src: String,
+  schema: String,
+  using: String
 ) extends DemoCommand
 
 case class Todo(
@@ -48,7 +50,6 @@ object Demo extends CommandApp[DemoCommand] {
   implicit val fixthis2 = schema.json.Writer.encode[Fix[schema.SchemaF]]
   implicit val wtf = transform.json.Reader.decoder[Fix[transform.TransformF]]
   implicit val wtf2 = schema.json.Reader.decoder[Fix[schema.SchemaF]]
-
 
   val aaa = fix.struct(
     "name" -> fix.value(TextType),
@@ -70,10 +71,11 @@ object Demo extends CommandApp[DemoCommand] {
       "school" -> tra.select("school", tra.select("school_name", tra.keep))
     ))
 
-  def show(file: String): Unit = {
-    val path = pwd / 'samples / file
-    println(read(path))
-    println(transform1.asJson.spaces2)
+  def show(schemaPath: String, transformPath: String): Unit = {
+    println("\n== Transform Definition ==")
+    println(read(pwd / 'samples / transformPath))
+    println("\n== Schema Definition ==")
+    println(read(pwd / 'samples / schemaPath))
   }
 
   def todo(dataSrc: String, schemaSrc: String, transformSrc: String): Unit = {
@@ -126,7 +128,7 @@ object Demo extends CommandApp[DemoCommand] {
   }
 
   def run(command: DemoCommand, args: RemainingArgs): Unit = command match {
-    case Show(file)            => show(file)
+    case Show(_, sch, using)   => show(sch, using)
     case Todo(src, sch, using) => todo(src, sch, using)
   }
 }
