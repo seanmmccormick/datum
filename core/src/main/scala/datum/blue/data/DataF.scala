@@ -41,10 +41,6 @@ object DataF {
         val tv = Traverse[Vector].traverse(vs)(f)
         G.map(tv)(RowDataF.apply)
 
-//      case OptionalDataF(opt) =>
-//        val to = Traverse[Option].traverse(opt)(f)
-//        G.map(to)(OptionalDataF.apply)
-
       case v @ IntegerDataF(_) => G.pure(v)
       case v @ RealDataF(_)    => G.pure(v)
       case v @ TextDataF(_)    => G.pure(v)

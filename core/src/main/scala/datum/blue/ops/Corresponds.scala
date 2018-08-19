@@ -1,22 +1,21 @@
 package datum.blue.ops
 
 import alleycats.Empty
+import datum.=>?
 import datum.blue.data._
-import datum.blue.{data, attributes, schema}
+import datum.blue.{attributes, data, schema}
 import datum.blue.schema._
 import turtles._
 import datum.blue.attributes.Attributes
 
 object Corresponds {
 
-  type =>?[-A, +B] = PartialFunction[A, B]
-
   def algebra[Data: Empty](
-    check: (DataF[Data], Attributes) =>? Boolean
+    checks: (DataF[Data], Attributes) =>? Boolean
   )(implicit Data: Recursive.Aux[Data, DataF]): Algebra[SchemaF, Data => Boolean] = {
 
     def checkOrDefault(d: DataF[Data], attrs: Attributes, default: Boolean): Boolean = {
-      check.applyOrElse[(DataF[Data], Attributes), Boolean]((d, attrs), _ => default)
+      checks.applyOrElse[(DataF[Data], Attributes), Boolean]((d, attrs), _ => default)
     }
 
     {
@@ -83,8 +82,8 @@ object Corresponds {
   }
 
   object checks {
+
     def optional[Data]: (DataF[Data], Attributes) =>? Boolean = {
-      //case (_, attr) if attributes.isOptional(attr) => true
       case (_, attr) if attributes.isOptional(attr) => true
     }
 

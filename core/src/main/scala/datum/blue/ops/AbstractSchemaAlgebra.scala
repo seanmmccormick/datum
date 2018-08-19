@@ -1,12 +1,13 @@
 package datum.blue.ops
 
+import cats.Monad
 import datum.blue.attributes.Attributes
 import datum.blue.schema._
-import turtles.Algebra
+import turtles.{Algebra, AlgebraM}
 
 import scala.collection.immutable.SortedMap
 
-object SuperAbstract {
+object AbstractSchemaAlgebra {
 
   trait Folder[X] {
     def onBoolean: X
@@ -16,7 +17,7 @@ object SuperAbstract {
     def onStruct(fields: SortedMap[String, X]): X
   }
 
-  def function1[In, Out](fold: Folder[In => Out])(
+  def toFunction[In, Out](fold: Folder[In => Out])(
     check: PartialFunction[(Out, Attributes), Out]
   ): Algebra[SchemaF, In => Out] = {
 
