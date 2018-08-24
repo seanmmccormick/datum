@@ -1,5 +1,7 @@
 package datum.blue
 
+import cats.data.State
+import datum.blue.schema.SchemaF
 import turtles.{Birecursive, Corecursive, Recursive}
 import turtles.data.Fix
 
@@ -23,4 +25,8 @@ package object attributes {
       case (common.optional, Flag) => true
     }.isDefined
   }
+
+  type Attributed[X] = State[Attributes, X]
+
+
 }

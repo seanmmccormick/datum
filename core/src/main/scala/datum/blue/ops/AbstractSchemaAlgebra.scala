@@ -1,7 +1,7 @@
 package datum.blue.ops
 
-import cats.Monad
-import datum.blue.attributes.Attributes
+import cats.data.State
+import datum.blue.attributes.{Attributed, Attributes}
 import datum.blue.schema._
 import turtles.{Algebra, AlgebraM}
 
@@ -45,6 +45,24 @@ object AbstractSchemaAlgebra {
       case StructF(fields, attrs) =>
         in =>
           checking(fold.onStruct(fields)(in), attrs)
+    }
+  }
+
+  import cats.implicits._
+
+  def toFunction2[In, Out](fold: Folder[In => Out])(
+    modifying: Attributed[Out] => Attributed[Out]): Algebra[SchemaF, In => Out] = {
+
+    def eval(attrs: Attributes)(fold: In => Out): In => Out = {
+      (modifying <<< State.pure <<< fold) >>> { _.runA(attrs).value }
+    }
+
+    {
+      case ValueF(BooleanType, attrs) => eval(attrs)(fold.onBoolean)
+      case ValueF(IntegerType, attrs) => eval(attrs)(fold.onInteger)
+      case ValueF(TextType, attrs)    => eval(attrs)(fold.onText)
+      case ValueF(RealType, attrs)    => eval(attrs)(fold.onReal)
+      case StructF(fields, attrs)     => eval(attrs)(fold.onStruct(fields))
     }
   }
 }

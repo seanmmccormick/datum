@@ -19,7 +19,6 @@ final case class RowDataF[R](values: Vector[R]) extends DataF[R]
 
 // union ???
 
-//final case class OptionalDataF[R](value: Option[R]) extends DataF[R]
 final case class IntegerDataF(value: Long) extends DataF[Nothing]
 final case class RealDataF(value: Double) extends DataF[Nothing]
 final case class TextDataF(value: String) extends DataF[Nothing]
