@@ -24,7 +24,11 @@ lazy val core = (project in file("core"))
   .settings(
     name := "datum-core",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "alleycats-core" % "1.1.0",
+      "org.typelevel" %% "cats-core" % "1.2.0",
+      "org.typelevel" %% "alleycats-core" % "1.2.0",
+      "io.higherkindness" %% "droste-core" % "0.4.0",
+      "org.typelevel" %% "cats-effect" % "1.0.0-RC3",
+      "io.chrisdavenport" %% "cats-scalacheck" % "0.1.0",
       "io.github.davidgregory084" %% "schemes-core" % "0.2.0",
       "org.technomadic" %% "turtles-core" % "0.1.0",
       "com.lihaoyi" %% "pprint" % "0.5.2",
