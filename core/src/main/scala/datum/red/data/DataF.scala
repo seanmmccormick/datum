@@ -26,7 +26,7 @@ package dataum.data
 //  }
 //}
 
-sealed trait Value
-case class IntValue(v: Int) extends Value
-case class TextValue(v: String) extends Value
-case object NoValue extends Value
+//sealed trait Value
+//case class IntValue(v: Int) extends Value
+//case class TextValue(v: String) extends Value
+//case object NoValue extends Value
