@@ -1,6 +1,7 @@
 lazy val commonSettings = Seq(
   name := "datum",
   scalaVersion := "2.12.6",
+  organization := "com.voltir",
   resolvers += Resolver.sonatypeRepo("releases"),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
   scalacOptions ++= Seq(
