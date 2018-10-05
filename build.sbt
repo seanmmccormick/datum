@@ -26,7 +26,7 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "1.2.0",
       "org.typelevel" %% "alleycats-core" % "1.2.0",
-      "io.higherkindness" %% "droste-core" % "0.4.0",
+      "io.higherkindness" %% "droste-core" % "0.5.0",
       "org.typelevel" %% "cats-effect" % "1.0.0-RC3",
       "io.github.davidgregory084" %% "schemes-core" % "0.2.0",
       "org.technomadic" %% "turtles-core" % "0.1.0",
@@ -44,6 +44,16 @@ lazy val json = (project in file("json"))
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % "0.9.3",
       "io.circe" %% "circe-parser" % "0.9.3"
+    )
+  )
+  .dependsOn(core)
+
+lazy val ujson = (project in file("ujson"))
+  .settings(commonSettings)
+  .settings(
+    name := "datum-ujson",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "0.6.6"
     )
   )
   .dependsOn(core)
