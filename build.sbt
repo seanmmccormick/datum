@@ -11,7 +11,6 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification"
   ),
   libraryDependencies ++= Seq(
-    "org.technomadic" %% "turtles-core" % "0.1.0",
     "com.lihaoyi" %% "pprint" % "0.5.2",
     "org.scalatest" %% "scalatest" % "3.0.5" % Test
   )
@@ -30,7 +29,6 @@ lazy val core = (project in file("core"))
       "io.higherkindness" %% "droste-core" % "0.5.0",
       "org.typelevel" %% "cats-effect" % "1.0.0",
       "io.github.davidgregory084" %% "schemes-core" % "0.2.0",
-      "org.technomadic" %% "turtles-core" % "0.1.0",
       "com.lihaoyi" %% "pprint" % "0.5.2",
       "io.chrisdavenport" %% "cats-scalacheck" % "0.1.0" % Test,
       "com.47deg" %% "scalacheck-toolbox-datetime" % "0.2.5" % Test,
