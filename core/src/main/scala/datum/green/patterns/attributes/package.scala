@@ -11,4 +11,7 @@ package object attributes {
   implicit class AttributeStringOps(inp: String) {
     def asAttributeKey: AttributeKey = AttributeKey(inp)
   }
+
+  def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))
+  def property(text: String): Attribute = Fix.apply[AttributesF](TextPropertyF(text))
 }
