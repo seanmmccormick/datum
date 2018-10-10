@@ -56,4 +56,10 @@ trait AttributeReadWriter {
         case Js.Str(x) => AttributeKey(x)
       }
     )
+
+  implicit val mapAsObj: ReadWriter[Map[AttributeKey, Attribute]] = upickle.default
+    .readwriter[Map[String, Attribute]]
+    .bimap(x => {
+      x.map { case (key, value) => (key.key, value) }
+    }, y => y.map { case (key, value) => (AttributeKey(key), value) })
 }

@@ -13,5 +13,12 @@ package object attributes {
   }
 
   def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))
+
   def property(text: String): Attribute = Fix.apply[AttributesF](TextPropertyF(text))
+
+  def and(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](AndF(left, right))
+
+  def or(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](OrF(left, right))
+
+  def label(name: String, attr: Attribute): Attribute = Fix.apply[AttributesF](LabelF(name, attr))
 }
