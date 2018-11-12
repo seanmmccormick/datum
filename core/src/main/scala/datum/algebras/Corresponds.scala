@@ -1,8 +1,8 @@
-package datum.green.algebras
-import datum.green.algebras.generic.ModifiableFunction
-import datum.green.patterns.attributes.Attributed
-import datum.green.patterns.data._
-import datum.green.patterns.schemas._
+package datum.algebras
+import datum.algebras.generic.ModifiableFunction
+import datum.patterns.attributes.Attributed
+import datum.patterns.data._
+import datum.patterns.schemas._
 import qq.droste.Algebra
 import qq.droste.data.Fix
 

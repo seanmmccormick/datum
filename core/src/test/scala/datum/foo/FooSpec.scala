@@ -1,6 +1,6 @@
-package datum.green.foo
+package datum.foo
 
-import datum.green.SchemaGen
+import datum.SchemaGen
 import org.scalacheck.Arbitrary
 import org.scalatest.{Matchers, WordSpec}
 

@@ -1,7 +1,7 @@
-package datum.green.libjson
-import datum.green.libjson.attributes.AttributeReadWriter
-import datum.green.libjson.schemas.SchemaReadWriter
-import datum.green.patterns.attributes.{Attribute, AttributeKey}
+package datum.libjson
+import datum.libjson.attributes.AttributeReadWriter
+import datum.libjson.schemas.SchemaReadWriter
+import datum.patterns.attributes.{Attribute, AttributeKey}
 
 //trait Overrides { self: AttributeReadWriter =>
 //  import upickle.default._

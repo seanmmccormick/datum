@@ -1,4 +1,4 @@
-package datum.green.patterns.attributes
+package datum.patterns.attributes
 
 import cats.{Applicative, Traverse}
 import qq.droste.util.DefaultTraverse

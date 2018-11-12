@@ -1,12 +1,13 @@
-package datum.green.algebras
-import datum.green.{DataGen, SchemaGen}
-import datum.green.patterns.schemas.{IntType, Schema, TextType}
+package datum.algebras
+import datum.{DataGen, SchemaGen}
+import datum.patterns.schemas.{IntType, Schema, TextType}
+import datum.patterns.data.Data
+import datum.patterns.schemas
 import org.scalatest.prop.Checkers
 import org.scalatest.{Matchers, WordSpec}
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Prop._
-import datum.green.patterns.data.Data
-import datum.green.patterns.schemas
+
 import org.scalacheck.{Arbitrary, Gen}
 
 class CorrespondsSpec extends WordSpec with Checkers {

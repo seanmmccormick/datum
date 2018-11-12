@@ -1,4 +1,4 @@
-package datum.green.patterns
+package datum.patterns
 
 import cats.data.State
 import qq.droste.data.Fix

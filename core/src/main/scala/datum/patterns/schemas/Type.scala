@@ -1,4 +1,4 @@
-package datum.green.patterns.schemas
+package datum.patterns.schemas
 
 sealed trait Type
 case object IntType extends Type

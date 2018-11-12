@@ -1,3 +1,3 @@
-package datum.green.patterns.attributes
+package datum.patterns.attributes
 
 final case class AttributeKey(key: String) extends AnyVal

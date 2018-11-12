@@ -1,9 +1,9 @@
-package datum.green
+package datum
 import java.time.ZonedDateTime
 
-import datum.green.patterns.data
-import datum.green.patterns.data.Data
-import datum.green.patterns.schemas._
+import datum.patterns.data
+import datum.patterns.data.Data
+import datum.patterns.schemas._
 import com.fortysevendeg.scalacheck.datetime.jdk8.ArbitraryJdk8._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen

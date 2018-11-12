@@ -1,8 +1,8 @@
-package datum.green.libjson.schemas
+package datum.libjson.schemas
 
-import datum.green.libjson.attributes.AttributeReadWriter
-import datum.green.patterns.attributes.{Attribute, AttributeKey}
-import datum.green.patterns.schemas._
+import datum.libjson.attributes.AttributeReadWriter
+import datum.patterns.attributes.{Attribute, AttributeKey}
+import datum.patterns.schemas._
 import qq.droste.{Algebra, Coalgebra, scheme}
 import ujson.Js
 import upickle.default._

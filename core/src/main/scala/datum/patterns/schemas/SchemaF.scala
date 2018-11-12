@@ -1,13 +1,13 @@
-package datum.green.patterns.schemas
+package datum.patterns.schemas
+
+import datum.patterns.attributes.{Attribute, AttributeKey}
 
 import cats.{Applicative, Traverse}
-import datum.green.patterns.attributes.{Attribute, AttributeKey}
-import qq.droste.util.DefaultTraverse
 import cats.instances.sortedMap._
 import cats.instances.string._
 import cats.instances.vector._
 import cats.instances.list._
-
+import qq.droste.util.DefaultTraverse
 import scala.collection.immutable.SortedMap
 
 sealed trait SchemaF[+R] extends Product with Serializable {

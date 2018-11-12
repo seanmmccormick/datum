@@ -1,6 +1,6 @@
-package datum.green.patterns
+package datum.patterns
 
-import datum.green.patterns.attributes.{Attribute, AttributeKey}
+import datum.patterns.attributes.{Attribute, AttributeKey}
 import qq.droste.data.Fix
 
 import scala.collection.immutable.SortedMap

@@ -1,9 +1,9 @@
-package datum.green.algebras.generic
+package datum.algebras.generic
 
 import cats.data.State
 import cats.implicits._
-import datum.green.patterns.attributes.{Attribute, AttributeKey, Attributed}
-import datum.green.patterns.schemas._
+import datum.patterns.attributes.{Attribute, AttributeKey, Attributed}
+import datum.patterns.schemas._
 import qq.droste._
 
 trait ModifiableFunction[In, Out] {

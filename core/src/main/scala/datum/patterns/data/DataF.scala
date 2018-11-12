@@ -1,4 +1,4 @@
-package datum.green.patterns.data
+package datum.patterns.data
 
 import java.time.{Instant, LocalDate, LocalDateTime, ZonedDateTime}
 

@@ -1,7 +1,7 @@
-package datum.green
+package datum
 
-import datum.green.patterns.schemas
-import datum.green.patterns.schemas._
+import datum.patterns.schemas
+import datum.patterns.schemas._
 import org.scalacheck.Gen
 
 import qq.droste._

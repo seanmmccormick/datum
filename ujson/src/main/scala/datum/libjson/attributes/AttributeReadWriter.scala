@@ -1,6 +1,6 @@
-package datum.green.libjson.attributes
+package datum.libjson.attributes
 
-import datum.green.patterns.attributes._
+import datum.patterns.attributes._
 import qq.droste._
 import ujson.Js
 import upickle.default._
