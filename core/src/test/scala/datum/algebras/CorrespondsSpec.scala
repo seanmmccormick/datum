@@ -1,11 +1,12 @@
 package datum.algebras
+
 import datum.{DataGen, SchemaGen}
 import datum.patterns.schemas.{IntType, Schema, TextType}
 import datum.patterns.data.Data
 import datum.patterns.schemas
+
 import org.scalatest.prop.Checkers
-import org.scalatest.{Matchers, WordSpec}
-import org.scalacheck.Arbitrary._
+import org.scalatest.WordSpec
 import org.scalacheck.Prop._
 
 import org.scalacheck.{Arbitrary, Gen}

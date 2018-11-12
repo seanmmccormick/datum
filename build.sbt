@@ -1,3 +1,9 @@
+
+// Versions
+val catsV = "1.4.0"
+val drosteV = "0.5.0"
+
+// Settings
 lazy val commonSettings = Seq(
   name := "datum",
   scalaVersion := "2.12.6",
@@ -8,20 +14,21 @@ lazy val commonSettings = Seq(
     "-Xlint",
     "-deprecation",
     "-unchecked",
-    "-Ypartial-unification"
+    "-Ypartial-unification",
+    "-Ypatmat-exhaust-depth","40"
   ),
   libraryDependencies ++= Seq(
+    "org.typelevel" %% "cats-core" % catsV,
+    "org.typelevel" %% "alleycats-core" % catsV,
+    "io.higherkindness" %% "droste-core" % drosteV,
     "com.lihaoyi" %% "pprint" % "0.5.2",
-    "org.typelevel" %% "cats-core" % "1.4.0",
-    "org.typelevel" %% "alleycats-core" % "1.4.0",
-    "io.higherkindness" %% "droste-core" % "0.5.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-    "org.typelevel" %% "cats-effect" % "1.0.0",
     "io.chrisdavenport" %% "cats-scalacheck" % "0.1.0" % Test,
     "com.47deg" %% "scalacheck-toolbox-datetime" % "0.2.5" % Test
   )
 )
 
+// Modules
 lazy val root = (project in file("."))
   .aggregate(core, ujson)
 

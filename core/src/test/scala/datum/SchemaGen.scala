@@ -2,11 +2,12 @@ package datum
 
 import datum.patterns.schemas
 import datum.patterns.schemas._
+
 import org.scalacheck.Gen
 
-import qq.droste._
-
 object SchemaGen {
+
+  val MAX_DEPTH = 4
 
   val types: List[Type] = List(
     IntType,
@@ -29,14 +30,14 @@ object SchemaGen {
   def genColumn(level: Int): Gen[Column[Schema]] =
     for {
       header <- Gen.resize(3, Gen.alphaLowerStr)
-      w = Math.max(4 - level, 0)
+      w = Math.max(MAX_DEPTH - level, 0)
       value <- Gen.frequency(5 -> genValue, w -> genStruct(level + 1), w -> genRow(level + 1))
     } yield Column(value, Some(header))
 
   def genStructFields(level: Int): Gen[(String, Schema)] =
     for {
       k <- Gen.resize(5, Gen.alphaLowerStr)
-      w = Math.max(4 - level, 0)
+      w = Math.max(MAX_DEPTH - level, 0)
       v <- Gen.frequency(5 -> genValue, w -> genStruct(level + 1), w -> genRow(level + 1))
     } yield (k, v)
 
