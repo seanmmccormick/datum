@@ -19,13 +19,13 @@ final case class ObjF[R](
   attributes: Map[AttributeKey, Attribute] = Map.empty
 ) extends SchemaF[R]
 
-final case class ArrayF[R](
-  element: R,
+final case class RowF[R](
+  elements: Vector[Column[R]],
   attributes: Map[AttributeKey, Attribute] = Map.empty
 ) extends SchemaF[R]
 
-final case class RowF[R](
-  elements: Vector[Column[R]],
+final case class ArrayF[R](
+  element: R,
   attributes: Map[AttributeKey, Attribute] = Map.empty
 ) extends SchemaF[R]
 
@@ -51,15 +51,15 @@ object SchemaF {
           }
           G.map(tl)(x => RowF(x, attrs))
 
+        case ObjF(fields, meta) =>
+          val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
+          G.map(tm)(x => ObjF(x, meta))
+
         case UnionF(alts, meta) =>
           val tl = Traverse[List].traverse(alts)(f)
           G.map(tl)(x => UnionF(x, meta))
 
         case ArrayF(e, meta) => G.map(f(e))(x => ArrayF(x, meta))
-
-        case ObjF(fields, meta) =>
-          val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
-          G.map(tm)(x => ObjF(x, meta))
       }
     }
   }

@@ -16,7 +16,7 @@ class Corresponds(override val modify: Attributed[Boolean] => Attributed[Boolean
 
     case ObjF(schemaFields, _) =>
       Fix.un[DataF](_) match {
-        case StructValue(valueFields) =>
+        case ObjValue(valueFields) =>
           schemaFields.forall {
             case (key, checkFn) =>
               valueFields.contains(key) && checkFn(valueFields(key))
@@ -27,10 +27,20 @@ class Corresponds(override val modify: Attributed[Boolean] => Attributed[Boolean
     case RowF(schemaColumns, _) =>
       Fix.un[DataF](_) match {
         case RowValue(values) if schemaColumns.length == values.length =>
-          schemaColumns.zip(values).forall { case (column, data) =>
-            val fn = column.value
-            fn(data)
+          schemaColumns.zip(values).forall {
+            case (column, data) =>
+              val fn = column.value
+              fn(data)
           }
+        case _ => false
+      }
+
+    case UnionF(alternatives, _) =>
+      d =>
+        alternatives.exists(pred => pred(d))
+
+    case ArrayF(element, _) =>
+      Fix.un[DataF](_) match {
         case _ => false
       }
 

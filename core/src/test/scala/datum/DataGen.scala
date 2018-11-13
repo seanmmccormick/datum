@@ -15,6 +15,7 @@ object DataGen {
   val dataGen: AlgebraM[Gen, SchemaF, Data] = AlgebraM {
     case ObjF(fields, _) => data.struct(fields)
     case RowF(elements, _)  => data.row(elements.map(_.value))
+    case UnionF(alternatives, _) => alternatives.head
 
     case ValueF(IntType, _)     => arbitrary[Int].map(data.integer)
     case ValueF(LongType, _)    => arbitrary[Long].map(data.long)

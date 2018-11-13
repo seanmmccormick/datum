@@ -10,13 +10,13 @@ package object data {
   type Data = Fix[DataF]
 
   def struct(fields: (String, Data)*): Data = {
-    Fix(StructValue(SortedMap(fields: _*)))
+    Fix(ObjValue(SortedMap(fields: _*)))
   }
 
   def struct(fields: SortedMap[String, Data]): Data = {
-    Fix(StructValue(fields))
+    Fix(ObjValue(fields))
   }
-
+  
   def row(
     elements: Vector[Data]
   ): Data = {

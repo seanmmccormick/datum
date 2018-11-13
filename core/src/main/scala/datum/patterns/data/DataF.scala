@@ -12,8 +12,9 @@ import scala.collection.immutable.SortedMap
 
 sealed trait DataF[+R] extends Product with Serializable
 
-final case class StructValue[R](fields: SortedMap[String, R]) extends DataF[R]
+final case class ObjValue[R](fields: SortedMap[String, R]) extends DataF[R]
 final case class RowValue[R](values: Vector[R]) extends DataF[R]
+
 final case class IntValue(value: Int) extends DataF[Nothing]
 final case class LongValue(value: Long) extends DataF[Nothing]
 final case class FloatValue(value: Float) extends DataF[Nothing]
@@ -31,9 +32,9 @@ object DataF {
   implicit val traverse: Traverse[DataF] = new DefaultTraverse[DataF] {
     override def traverse[G[_], A, B](fa: DataF[A])(f: A => G[B])(implicit G: Applicative[G]): G[DataF[B]] = {
       fa match {
-        case StructValue(fields) =>
+        case ObjValue(fields) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
-          G.map(tm)(StructValue.apply)
+          G.map(tm)(ObjValue.apply)
 
         case RowValue(vs) =>
           val tv = Traverse[Vector].traverse(vs)(f)
@@ -51,7 +52,6 @@ object DataF {
         case v @ InstantValue(_)   => G.pure(v)
         case v @ LocalTimeValue(_) => G.pure(v)
         case v @ ZonedTimeValue(_) => G.pure(v)
-
       }
     }
   }

@@ -25,7 +25,7 @@ class CorrespondsSpec extends WordSpec with Checkers {
 
   val correspondsFn = new Corresponds(identity)
 
-  val otherSchema: Schema = schemas.struct()(
+  val otherSchema: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType),
     "bar" -> schemas.value(TextType)
   )
