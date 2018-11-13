@@ -1,4 +1,4 @@
-package datum.libjson.attributes
+package datum.ujsonlib.attributes
 
 import datum.patterns.attributes._
 import qq.droste._

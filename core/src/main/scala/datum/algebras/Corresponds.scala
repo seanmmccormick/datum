@@ -14,7 +14,7 @@ class Corresponds(override val modify: Attributed[Boolean] => Attributed[Boolean
 
   override val base: Algebra[SchemaF, Data => Boolean] = Algebra {
 
-    case StructF(schemaFields, _) =>
+    case ObjF(schemaFields, _) =>
       Fix.un[DataF](_) match {
         case StructValue(valueFields) =>
           schemaFields.forall {

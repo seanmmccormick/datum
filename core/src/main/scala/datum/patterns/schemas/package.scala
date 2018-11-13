@@ -9,7 +9,7 @@ package object schemas {
   type Schema = Fix[SchemaF]
 
   def struct(attributes: Map[AttributeKey, Attribute] = Map.empty)(fields: (String, Schema)*): Schema = {
-    Fix(StructF(SortedMap(fields: _*), attributes))
+    Fix(ObjF(SortedMap(fields: _*), attributes))
   }
 
   def row(attributes: Map[AttributeKey, Attribute] = Map.empty)(elements: Column[Schema]*): Schema = {

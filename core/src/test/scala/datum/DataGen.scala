@@ -13,7 +13,7 @@ import qq.droste.{AlgebraM, scheme}
 object DataGen {
 
   val dataGen: AlgebraM[Gen, SchemaF, Data] = AlgebraM {
-    case StructF(fields, _) => data.struct(fields)
+    case ObjF(fields, _) => data.struct(fields)
     case RowF(elements, _)  => data.row(elements.map(_.value))
 
     case ValueF(IntType, _)     => arbitrary[Int].map(data.integer)

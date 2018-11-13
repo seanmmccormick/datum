@@ -1,7 +1,6 @@
-package datum.libjson
-import datum.libjson.attributes.AttributeReadWriter
-import datum.libjson.schemas.SchemaReadWriter
-import datum.patterns.attributes.{Attribute, AttributeKey}
+package datum.ujsonlib
+import datum.ujsonlib.attributes.AttributeReadWriter
+import datum.ujsonlib.schemas.SchemaReadWriter
 
 //trait Overrides { self: AttributeReadWriter =>
 //  import upickle.default._

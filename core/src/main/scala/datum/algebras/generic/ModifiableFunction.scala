@@ -18,7 +18,7 @@ trait ModifiableFunction[In, Out] {
 
   def algebra: Algebra[SchemaF, In => Out] = Algebra {
     case x @ ValueF(_, attrs)  => run(attrs)(base(x))
-    case x @ StructF(_, attrs) => run(attrs)(base(x))
+    case x @ ObjF(_, attrs) => run(attrs)(base(x))
     case x @ RowF(_, attrs)    => run(attrs)(base(x))
     case x @ ArrayF(_, attrs)  => run(attrs)(base(x))
     case x @ UnionF(_, attrs)  => run(attrs)(base(x))

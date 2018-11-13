@@ -1,6 +1,6 @@
-package datum.libjson.schemas
+package datum.ujsonlib.schemas
 
-import datum.libjson.attributes.AttributeReadWriter
+import datum.ujsonlib.attributes.AttributeReadWriter
 import datum.patterns.attributes.{Attribute, AttributeKey}
 import datum.patterns.schemas._
 import qq.droste.{Algebra, Coalgebra, scheme}
@@ -12,7 +12,7 @@ import scala.collection.immutable.SortedMap
 trait SchemaReadWriter { self: AttributeReadWriter =>
 
   val algebra: Algebra[SchemaF, Js.Value] = Algebra {
-    case StructF(fields, attributes) =>
+    case ObjF(fields, attributes) =>
       Js.Obj(
         "fields" -> fields,
         "attributes" -> writeJs(attributes)
@@ -54,7 +54,7 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
 
     case Js.Obj(fields) if fields.contains("fields") =>
       val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
-      StructF(SortedMap(fields("fields").obj.toSeq: _*), attrs)
+      ObjF(SortedMap(fields("fields").obj.toSeq: _*), attrs)
   }
 
   implicit val scheamReadWrite: ReadWriter[Schema] = upickle.default

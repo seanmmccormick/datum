@@ -14,7 +14,7 @@ sealed trait SchemaF[+R] extends Product with Serializable {
   def attributes: Map[AttributeKey, Attribute]
 }
 
-final case class StructF[R](
+final case class ObjF[R](
   fields: SortedMap[String, R],
   attributes: Map[AttributeKey, Attribute] = Map.empty
 ) extends SchemaF[R]
@@ -57,9 +57,9 @@ object SchemaF {
 
         case ArrayF(e, meta) => G.map(f(e))(x => ArrayF(x, meta))
 
-        case StructF(fields, meta) =>
+        case ObjF(fields, meta) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
-          G.map(tm)(x => StructF(x, meta))
+          G.map(tm)(x => ObjF(x, meta))
       }
     }
   }
