@@ -16,7 +16,7 @@ package object data {
   def struct(fields: SortedMap[String, Data]): Data = {
     Fix(ObjValue(fields))
   }
-  
+
   def row(
     elements: Vector[Data]
   ): Data = {
