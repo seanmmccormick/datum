@@ -1,13 +1,13 @@
 package datum.algebras
-import datum.algebras.generic.ModifiableFunction
-import datum.patterns.attributes.Attributed
+import datum.algebras.generic.{AttributedFunction, ModifiableFunction}
+import datum.patterns.attributes.{Attributed, Modifiable}
+import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
 import qq.droste.Algebra
 import qq.droste.data.Fix
 
-class Corresponds(override val modify: Attributed[Boolean] => Attributed[Boolean])
-  extends ModifiableFunction[Data, Boolean] {
+class Corresponds(override val modify: Boolean => Attributed[Boolean]) extends AttributedFunction[Data, Boolean] {
 
   private def matchValue(fn: PartialFunction[DataF[Fix[DataF]], Boolean])(value: Data): Boolean =
     fn.applyOrElse[DataF[Fix[DataF]], Boolean](Fix.un[DataF](value), _ => false)
@@ -18,8 +18,11 @@ class Corresponds(override val modify: Attributed[Boolean] => Attributed[Boolean
       Fix.un[DataF](_) match {
         case ObjValue(valueFields) =>
           schemaFields.forall {
-            case (key, checkFn) =>
-              valueFields.contains(key) && checkFn(valueFields(key))
+            case (key, checkFn) if valueFields.contains(key) =>
+              checkFn(valueFields(key))
+
+            // ensure child is checked for cases like option or default values
+            case (_, checkFn) => checkFn(data.empty)
           }
         case _ => false
       }

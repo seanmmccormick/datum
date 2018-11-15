@@ -1,6 +1,6 @@
 package datum.patterns
 
-import cats.data.State
+import cats.data.{Reader, State}
 import qq.droste.data.Fix
 
 package object attributes {
@@ -8,7 +8,10 @@ package object attributes {
 
   type AttributeMap = Map[AttributeKey, Attribute]
 
-  type Attributed[T] = State[AttributeMap, T]
+  type Attributed[T] = Reader[AttributeMap, T]
+  type Modifiable[T] = State[AttributeMap, T]
+
+  def default[A]: A => Attributed[A] = cats.data.ReaderT.pure
 
   implicit class AttributeStringOps(inp: String) {
     def asAttributeKey: AttributeKey = AttributeKey(inp)

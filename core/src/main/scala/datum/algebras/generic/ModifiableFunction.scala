@@ -2,13 +2,13 @@ package datum.algebras.generic
 
 import cats.data.State
 import cats.implicits._
-import datum.patterns.attributes.{Attribute, AttributeKey, Attributed}
+import datum.patterns.attributes.{Attribute, AttributeKey, Modifiable}
 import datum.patterns.schemas._
 import qq.droste._
 
 trait ModifiableFunction[In, Out] {
 
-  def modify: Attributed[Out] => Attributed[Out]
+  def modify: Modifiable[Out] => Modifiable[Out]
 
   def base: Algebra[SchemaF, In => Out]
 

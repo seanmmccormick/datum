@@ -4,34 +4,32 @@ import datum.patterns.attributes.AttributeMap
 import datum.patterns.schemas._
 import qq.droste.{Algebra, scheme}
 
-trait AttributedFunction[-In, Out] {
+trait AttributedFunction[In, Out] {
 
-  def modify: Reader[AttributeMap, Out] => Reader[AttributeMap, Out]
+  def modify: Out => Reader[AttributeMap, Out]
 
   def base: Algebra[SchemaF, In => Out]
-
-  private def run(attrs: AttributeMap)(initial: Out): Out = modify(Reader(_ => initial)).run(attrs)
 
   val algebra: Algebra[SchemaF, In => Out] = Algebra {
     case v @ ValueF(_, attrs) =>
       in =>
-        run(attrs)(base(v)(in))
+        modify(base(v)(in)).run(attrs)
 
     case obj @ ObjF(_, attrs) =>
       in =>
-        run(attrs)(base(obj)(in))
+        modify(base(obj)(in)).run(attrs)
 
     case row @ RowF(_, attrs) =>
       in =>
-        run(attrs)(base(row)(in))
+        modify(base(row)(in)).run(attrs)
 
     case arr @ ArrayF(_, attrs) =>
       in =>
-        run(attrs)(base(arr)(in))
+        modify(base(arr)(in)).run(attrs)
 
     case union @ UnionF(_, attrs) =>
       in =>
-        run(attrs)(base(union)(in))
+        modify(base(union)(in)).run(attrs)
   }
 
   private val generator = scheme.cata(algebra)
