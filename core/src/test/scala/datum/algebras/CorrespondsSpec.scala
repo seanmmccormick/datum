@@ -1,8 +1,6 @@
 package datum.algebras
 
-import cats.data.Reader
 import datum.modifiers.Optional
-import datum.patterns.attributes.Attributed
 import datum.{DataGen, SchemaGen}
 import datum.patterns.schemas.{IntType, Schema, TextType}
 import datum.patterns.data.Data
@@ -24,33 +22,7 @@ class CorrespondsSpec extends WordSpec with Checkers with Matchers {
 
   implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary(genDataFromSchema)
 
-  import cats.data.Kleisli
-  import cats.implicits._
-  import cats.instances._
-
-  val wat: Boolean => Attributed[Boolean] = { x =>
-    Kleisli.pure(x)
-  }
-
-  val foo: Boolean => Attributed[Boolean] = { x =>
-    Kleisli.pure(x)
-  }
-
-  val opt: Boolean => Attributed[Boolean] = {
-    case true => Kleisli.pure(true)
-    case false =>
-      Reader {
-        case attrs if attrs.contains(Optional.key) =>
-          true
-        case attrs                                 =>
-          if(attrs.nonEmpty) println(attrs)
-          false
-      }
-  }
-
-  val stab = Kleisli(wat) compose Kleisli(foo) compose Kleisli(opt)
-
-  val correspondsFn = new Corresponds(stab.run)
+  val correspondsFn = new Corresponds(Corresponds.optional)
 
   val otherSchema: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType),

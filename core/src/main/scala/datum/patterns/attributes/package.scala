@@ -1,6 +1,6 @@
 package datum.patterns
 
-import cats.data.{Reader, State}
+import cats.data.{Kleisli, Reader, State}
 import qq.droste.data.Fix
 
 package object attributes {
@@ -11,10 +11,28 @@ package object attributes {
   type Attributed[T] = Reader[AttributeMap, T]
   type Modifiable[T] = State[AttributeMap, T]
 
-  def default[A]: A => Attributed[A] = cats.data.ReaderT.pure
+  object Attributed {
+
+    @inline
+    def apply[A](f: AttributeMap => A): Attributed[A] = cats.data.ReaderT[cats.Id, AttributeMap, A](f)
+
+    @inline
+    def pure[A](a: A): Attributed[A] = cats.data.ReaderT.pure(a)
+
+    @inline
+    def identity[A]: A => Attributed[A] = pure
+  }
 
   implicit class AttributeStringOps(inp: String) {
     def asAttributeKey: AttributeKey = AttributeKey(inp)
+  }
+
+  implicit class AttributedAsKleisliOps[A](foo: A => Attributed[A]) {
+    @inline
+    def composeWith(rhs: A => Attributed[A]): A => Attributed[A] = (Kleisli(foo) compose Kleisli(rhs)).run
+
+    @inline
+    def |+|(rhs: A => Attributed[A]): A => Attributed[A] = composeWith(rhs)
   }
 
   def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))

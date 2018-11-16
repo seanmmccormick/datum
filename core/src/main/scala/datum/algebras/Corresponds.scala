@@ -1,5 +1,6 @@
 package datum.algebras
 import datum.algebras.generic.{AttributedFunction, ModifiableFunction}
+import datum.modifiers.Optional
 import datum.patterns.attributes.{Attributed, Modifiable}
 import datum.patterns.data
 import datum.patterns.data._
@@ -7,7 +8,9 @@ import datum.patterns.schemas._
 import qq.droste.Algebra
 import qq.droste.data.Fix
 
-class Corresponds(override val modify: Boolean => Attributed[Boolean]) extends AttributedFunction[Data, Boolean] {
+class Corresponds(
+  override val modify: Boolean => Attributed[Boolean] = Attributed.identity
+) extends AttributedFunction[Data, Boolean] {
 
   private def matchValue(fn: PartialFunction[DataF[Fix[DataF]], Boolean])(value: Data): Boolean =
     fn.applyOrElse[DataF[Fix[DataF]], Boolean](Fix.un[DataF](value), _ => false)
@@ -59,5 +62,12 @@ class Corresponds(override val modify: Boolean => Attributed[Boolean]) extends A
     case ValueF(ZonedTimeType, _) => matchValue { case ZonedTimeValue(_) => true }
     case ValueF(BytesType, _)     => matchValue { case BytesValue(_)     => true }
 
+  }
+}
+
+object Corresponds {
+  def optional: Boolean => Attributed[Boolean] = {
+    case true  => Attributed.pure(true)
+    case false => Attributed { _.contains(Optional.key) }
   }
 }
