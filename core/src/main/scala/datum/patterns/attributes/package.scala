@@ -14,10 +14,10 @@ package object attributes {
   object Attributed {
 
     @inline
-    def apply[A](f: AttributeMap => A): Attributed[A] = cats.data.ReaderT[cats.Id, AttributeMap, A](f)
+    def apply[A](f: AttributeMap => A): Attributed[A] = Kleisli.apply[cats.Id, AttributeMap, A](f)
 
     @inline
-    def pure[A](a: A): Attributed[A] = cats.data.ReaderT.pure(a)
+    def pure[A](a: A): Attributed[A] = Kleisli.pure(a)
 
     @inline
     def identity[A]: A => Attributed[A] = pure
@@ -31,8 +31,9 @@ package object attributes {
     @inline
     def composeWith(rhs: A => Attributed[A]): A => Attributed[A] = (Kleisli(foo) compose Kleisli(rhs)).run
 
+    // Kleisli composition (aka "fish" operator) - this might find its way into cats eventually
     @inline
-    def |+|(rhs: A => Attributed[A]): A => Attributed[A] = composeWith(rhs)
+    def >=>(rhs: A => Attributed[A]): A => Attributed[A] = composeWith(rhs)
   }
 
   def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))

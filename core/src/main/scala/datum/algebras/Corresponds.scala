@@ -45,6 +45,7 @@ class Corresponds(
       d =>
         alternatives.exists(pred => pred(d))
 
+      // TODO
     case ArrayF(element, _) =>
       Fix.un[DataF](_) match {
         case _ => false

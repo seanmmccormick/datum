@@ -1,12 +1,11 @@
 package datum.algebras.generic
-import cats.data.Reader
-import datum.patterns.attributes.AttributeMap
+import datum.patterns.attributes.Attributed
 import datum.patterns.schemas._
 import qq.droste.{Algebra, scheme}
 
 trait AttributedFunction[In, Out] {
 
-  def modify: Out => Reader[AttributeMap, Out]
+  def modify: Out => Attributed[Out]
 
   def base: Algebra[SchemaF, In => Out]
 
