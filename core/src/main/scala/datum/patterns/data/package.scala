@@ -9,11 +9,11 @@ import scala.collection.immutable.SortedMap
 package object data {
   type Data = Fix[DataF]
 
-  def struct(fields: (String, Data)*): Data = {
+  def obj(fields: (String, Data)*): Data = {
     Fix(ObjValue(SortedMap(fields: _*)))
   }
 
-  def struct(fields: SortedMap[String, Data]): Data = {
+  def obj(fields: SortedMap[String, Data]): Data = {
     Fix(ObjValue(fields))
   }
 

@@ -28,6 +28,7 @@ package object attributes {
   }
 
   implicit class AttributedAsKleisliOps[A](foo: A => Attributed[A]) {
+
     @inline
     def composeWith(rhs: A => Attributed[A]): A => Attributed[A] = (Kleisli(foo) compose Kleisli(rhs)).run
 
@@ -39,6 +40,8 @@ package object attributes {
   def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))
 
   def property(text: String): Attribute = Fix.apply[AttributesF](TextPropertyF(text))
+
+  def property(value: Double): Attribute = Fix.apply[AttributesF](NumericPropertyF(value))
 
   def and(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](AndF(left, right))
 

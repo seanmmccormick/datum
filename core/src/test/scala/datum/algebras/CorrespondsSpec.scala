@@ -52,21 +52,21 @@ class CorrespondsSpec extends WordSpec with Checkers with Matchers {
 
       val checkFn = correspondsFn.makeFn(opt)
 
-      val d1 = data.struct(
+      val d1 = data.obj(
         "required" -> data.integer(1),
         "maybe" -> data.integer(1)
       )
 
-      val d2 = data.struct(
+      val d2 = data.obj(
         "required" -> data.integer(2),
         "maybe" -> data.empty
       )
 
-      val d3 = data.struct(
+      val d3 = data.obj(
         "required" -> data.integer(3)
       )
 
-      val d4 = data.struct("nope" -> data.integer(4))
+      val d4 = data.obj("nope" -> data.integer(4))
 
       checkFn(d1) shouldBe true
       checkFn(d2) shouldBe true
