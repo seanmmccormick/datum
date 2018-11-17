@@ -1,5 +1,6 @@
 package datum.algebras
 
+import datum.algebras.defaults.{CompileDefaults, DefaultCompilationRules, Defaults}
 import datum.patterns.{data, schemas}
 import datum.patterns.schemas._
 import datum.patterns.attributes._
@@ -10,8 +11,12 @@ import qq.droste.data.Fix
 
 class DefaultsSpec extends WordSpec with Checkers with Matchers {
 
+  // Constructs a "schema defaults compiler/interpreter" that has rules for mapping
+  // Attributes into Data
+  val defaults = CompileDefaults(DefaultCompilationRules)
+
   "The Defaults algebra" should {
-    "foo" in {
+    "work given a basic example" in {
       val person: Schema = schemas.obj()(
         "name" -> schemas.value(TextType),
         "foo" -> schemas.value(BooleanType, Defaults.default(property(true))),
@@ -22,9 +27,9 @@ class DefaultsSpec extends WordSpec with Checkers with Matchers {
         "name" -> data.text("Bob")
       )
 
-      // Annotates a Schema with a value of type "Data" - this is the default value at that position.
+      // Annotates a Schema with "Data" values - this is the default value at that position.
       // The schema itself might be malformed, so this returns Either[Error, AnnotatedSchema].
-      val compiled = Defaults.annotate(person)
+      val compiled = defaults.compile(person)
 
       // Assume nothing wrong with the default definitions in the schema.
       val annotated = compiled.right.get
@@ -36,7 +41,7 @@ class DefaultsSpec extends WordSpec with Checkers with Matchers {
       // And we can use that function on data
       val result = applyDefaults(sample)
 
-      Fix.un[DataF](result) shouldBe a[ObjValue[Data]]
+      Fix.un[DataF](result) shouldBe a[ObjValue[_]]
 
       // downcast type and check values
       val check = Fix.un[DataF](result).asInstanceOf[ObjValue[Data]]
@@ -45,6 +50,35 @@ class DefaultsSpec extends WordSpec with Checkers with Matchers {
       check.fields.keySet should contain("age")
       check.fields("age") shouldBe data.integer(42)
       check.fields("foo") shouldBe data.boolean(true)
+    }
+
+    "insert fields given an empty input data obj" in {
+      val schema: Schema = schemas.obj()(
+        "foo" -> schemas.value(TextType, Defaults.default(property("hello"))),
+        "bar" -> schemas.value(IntType, Defaults.default(property(1))),
+        "nested" -> schemas.obj()(
+          "inner" -> schemas.value(BooleanType, Defaults.default(property(false)))
+        ),
+        "nope" -> schemas.obj()("missing" -> schemas.value(TextType))
+      )
+      val annotated = defaults.compile(schema).right.get
+      val fn = Defaults.makeFn(annotated)
+
+      val result = fn(data.empty)
+      Fix.un[DataF](result) shouldBe a[ObjValue[_]]
+
+      // downcast type and check values
+      val check = Fix.un[DataF](result).asInstanceOf[ObjValue[Data]]
+
+      check.fields.keySet should contain("foo")
+      check.fields.keySet should contain("bar")
+      check.fields.keySet should contain("nested")
+      check.fields.keySet shouldNot contain("nope")
+
+      check.fields("foo") shouldBe data.text("hello")
+      check.fields("bar") shouldBe data.integer(1)
+      check.fields("nested") shouldBe data.obj("inner" -> data.boolean(false))
+
     }
   }
 }

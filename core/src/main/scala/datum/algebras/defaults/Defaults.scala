@@ -1,47 +1,18 @@
-package datum.algebras
+package datum.algebras.defaults
 import datum.patterns.attributes._
 import datum.patterns.data
 import datum.patterns.data.{Data, DataF}
 import datum.patterns.schemas._
-import qq.droste.{Algebra, AlgebraM, scheme}
+
+import cats.instances.either._
 import qq.droste.data._
 import qq.droste.data.prelude._
-import cats.instances.either._
+import qq.droste.{Algebra, AlgebraM, scheme}
 
 object Defaults {
   val key: AttributeKey = "default".asAttributeKey
 
   def default(attribute: Attribute): (AttributeKey, Attribute) = key -> attribute
-
-  /*
-   * Given a Schema with "default" attributes, this:
-   *  1) Validates that the default values correspond to the schema correctly
-   *  2) Generates the default data value from the attribute value
-   *  3) Returns the annotated SchemaF tree with default values attached
-   */
-  // Todo - turn String into a better error type
-  val compile: AlgebraM[Either[String, ?], SchemaF, Attr[SchemaF, Data]] = {
-
-    // This function helps Scala infer types
-    def using(default: Data, schema: SchemaF[Attr[SchemaF, Data]]): Either[String, Attr[SchemaF, Data]] = {
-      Right(Attr.apply(default, schema))
-    }
-
-    AlgebraM[Either[String, ?], SchemaF, Attr[SchemaF, Data]] {
-
-      // todo
-      case v @ ValueF(BooleanType, attrs) if attrs.contains(key) =>
-        using(data.boolean(true), v)
-
-      // the default is "data.empty" if there is no default attribute defined
-      case otherwise => using(data.empty, otherwise)
-    }
-  }
-
-  def annotate(schema: Schema): Either[String, Attr[SchemaF, Data]] = {
-    val gen = scheme.cataM(compile)
-    gen(schema)
-  }
 
   /*
    * This is an Algebra that, given a default-annotated Schema,
@@ -51,13 +22,22 @@ object Defaults {
   val withDefaults: Algebra[AttrF[SchemaF, Data, ?], Data => Data] =
     Algebra[AttrF[SchemaF, Data, ?], Data => Data] {
 
-      // handle case for objects that can either themselves be missing, or contain missing fields
+      // handle cases for `ObjF`s that can either themselves be missing, or contain missing fields
       case AttrF(default, ObjF(schemaFields, attributes)) =>
         inp =>
           Fix.un[DataF](inp) match {
 
-            // Handle case for when the obj itself is missing
+            // Handle case for when the obj itself is missing and has a default defined
             case data.EmptyValue if attributes.contains(key) => default
+
+            // Handle case for when the obj is missing, but might have default fields
+            case data.EmptyValue =>
+              val nonEmptyFields = schemaFields.mapValues(fn => fn(data.empty)).filter {
+                case (_, result) if result == data.empty => false
+                case _                                   => true
+              }
+              if (nonEmptyFields.isEmpty) data.empty
+              else data.obj(nonEmptyFields)
 
             // Handle case for possibly missing fields in the object
             case data.ObjValue(dataFields) =>
@@ -79,8 +59,12 @@ object Defaults {
             case _               => inp
           }
 
+      // format: off
+
       // Otherwise, just return the input
       case _ => inp => inp
+
+      // format: on
     }
 
   // this requires qq.droste.data.prelude._ for the implicit Functor[AttrF] instance
