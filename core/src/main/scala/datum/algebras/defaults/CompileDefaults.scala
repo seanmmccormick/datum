@@ -1,12 +1,15 @@
 package datum.algebras.defaults
 import datum.algebras.defaults.Defaults.key
-import datum.patterns.data
+import datum.patterns.{data, schemas}
 import datum.patterns.data.Data
 import datum.patterns.schemas._
-
 import cats.instances.either._
-import qq.droste.{AlgebraM, scheme}
+import cats.syntax.either._
+import qq.droste._
 import qq.droste.data.Attr
+
+import scala.collection.immutable.SortedMap
+import scala.collection.mutable
 
 /*
  * Given a Schema with "default" attributes, this:
@@ -16,37 +19,78 @@ import qq.droste.data.Attr
  */
 class CompileDefaults(rules: AttributeCompilationRules) {
 
-  // Todo - turn String into a better error type
-  val compileAlgebra: AlgebraM[Either[String, ?], SchemaF, Attr[SchemaF, Data]] = {
+  // Mutable class to collect data about errors for a given Schema
+  private[this] case class ErrorFound(error: String) {
+    private val paths: mutable.Buffer[String] = mutable.Buffer.empty
 
-    // This function helps Scala infer types
-    def using(
-      compiled: Either[String, Data],
-      schema: SchemaF[Attr[SchemaF, Data]]
-    ): Either[String, Attr[SchemaF, Data]] = {
-      compiled.map { default =>
-        Attr.apply(default, schema)
-      }
+    def updatePath(t: String): ErrorFound = {
+      paths.prepend(t)
+      this
     }
 
-    AlgebraM[Either[String, ?], SchemaF, Attr[SchemaF, Data]] {
-      case v @ ValueF(IntType, attrs) if attrs.contains(key)     => using(rules.integer(attrs(key)), v)
-      case v @ ValueF(TextType, attrs) if attrs.contains(key)    => using(rules.text(attrs(key)), v)
-      case v @ ValueF(BooleanType, attrs) if attrs.contains(key) => using(rules.boolean(attrs(key)), v)
+    def asString: String = s"Invalid schema definition at { ${paths.mkString("/")} }:\n\t$error"
+  }
 
-      // An error if a schema node has a default, but no rules match
-      case otherwise if otherwise.attributes.contains(key) => Left("Invalid Default!")
+  private val empty = Right(data.empty)
 
-      // the default is "data.empty" if there is no default attribute defined
-      case otherwise => using(Right(data.empty), otherwise)
+  // This function helps Scala infer types
+  private def using(
+    compiled: Either[String, Data],
+    schema: SchemaF[Attr[SchemaF, Data]]
+  ): Either[ErrorFound, Attr[SchemaF, Data]] = {
+    compiled
+      .map { default =>
+        Attr.apply(default, schema)
+      }
+      .leftMap(ErrorFound.apply)
+  }
+
+  private val algebra: Algebra[SchemaF, Either[ErrorFound, Attr[SchemaF, Data]]] = {
+    def withType(tpe: Type)(result: Either[ErrorFound, Attr[SchemaF, Data]]) = {
+      result.leftMap(x => x.updatePath(s"(${Type.asString(tpe)})"))
+    }
+
+    Algebra[SchemaF, Either[ErrorFound, Attr[SchemaF, Data]]] {
+      case v @ ValueF(IntType, attrs) if attrs.contains(key) =>
+        withType(IntType) { using(rules.integer(attrs(key)), v) }
+
+      case v @ ValueF(TextType, attrs) if attrs.contains(key) =>
+        withType(TextType) { using(rules.text(attrs(key)), v) }
+
+      case v @ ValueF(BooleanType, attrs) if attrs.contains(key) =>
+        withType(BooleanType) { using(rules.boolean(attrs(key)), v) }
+
+      case v @ ValueF(_, attrs) => using(empty, v)
+
+      case ObjF(fields, attrs) =>
+        fields.collectFirst {
+          case (k, Left(err)) => Left(err.updatePath(k))
+        } getOrElse {
+          val valid = fields.mapValues {
+            case Right(ok) => ok
+          }
+          using(empty, ObjF(valid, attrs))
+        }
+
+      case RowF(elements, attrs) =>
+        elements.zipWithIndex.collectFirst {
+          case (Column(Left(err), header), idx) =>
+            val path = s"[${if (header.isDefined) header.get else s"$idx"}]"
+            Left(err.updatePath(path))
+        } getOrElse {
+          using(empty, RowF(elements.map(x => x.copy(x.value.right.get))))
+        }
+
+      case otherwise => Left(ErrorFound(s"TODO map: ${otherwise}"))
+
     }
   }
 
-  // this requires cats.instance.either._ for the Monad instance of Either
-  private val generator = scheme.cataM(compileAlgebra)
+  private val generator = scheme.cata(algebra)
 
   def compile(schema: Schema): Either[String, Attr[SchemaF, Data]] = {
-    generator(schema)
+    val zz = generator(schema)
+    zz.leftMap(_.asString)
   }
 }
 

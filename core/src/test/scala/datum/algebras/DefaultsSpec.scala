@@ -61,7 +61,9 @@ class DefaultsSpec extends WordSpec with Checkers with Matchers {
         ),
         "nope" -> schemas.obj()("missing" -> schemas.value(TextType))
       )
+
       val annotated = defaults.compile(schema).right.get
+
       val fn = Defaults.makeFn(annotated)
 
       val result = fn(data.empty)
@@ -78,7 +80,19 @@ class DefaultsSpec extends WordSpec with Checkers with Matchers {
       check.fields("foo") shouldBe data.text("hello")
       check.fields("bar") shouldBe data.integer(1)
       check.fields("nested") shouldBe data.obj("inner" -> data.boolean(false))
+    }
 
+    "fail to compile an invalid obj schema" in {
+      val schema: Schema = schemas.obj()("fail" -> schemas.value(IntType, Defaults.default(property("not an int"))))
+      defaults.compile(schema) shouldBe a[Left[_, _]]
+    }
+
+    "fail to compile an invalid row schema" in {
+      val schema: Schema = schemas.row()(
+        Column(schemas.value(IntType)),
+        Column(schemas.value(IntType, Defaults.default(property("not an int"))))
+      )
+      defaults.compile(schema) shouldBe a[Left[_, _]]
     }
   }
 }
