@@ -9,13 +9,13 @@ import qq.droste.Algebra
 import qq.droste.data.Fix
 
 class Corresponds(
-  override val modify: Boolean => Attributed[Boolean] = Attributed.identity
+  override val modifier: Boolean => Attributed[Boolean] = Attributed.identity
 ) extends AttributedFunction[Data, Boolean] {
 
   private def matchValue(fn: PartialFunction[DataF[Fix[DataF]], Boolean])(value: Data): Boolean =
     fn.applyOrElse[DataF[Fix[DataF]], Boolean](Fix.un[DataF](value), _ => false)
 
-  override val base: Algebra[SchemaF, Data => Boolean] = Algebra {
+  override val algebra: Algebra[SchemaF, Data => Boolean] = Algebra {
 
     case ObjF(schemaFields, _) =>
       Fix.un[DataF](_) match {

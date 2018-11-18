@@ -1,14 +1,12 @@
 package datum.algebras.defaults
-import datum.algebras.defaults.Defaults.key
-import datum.patterns.{data, schemas}
+
+import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
-import cats.instances.either._
+
 import cats.syntax.either._
 import qq.droste._
 import qq.droste.data.Attr
-
-import scala.collection.immutable.SortedMap
 import scala.collection.mutable
 
 /*
@@ -81,7 +79,7 @@ class CompileDefaults(rules: AttributeCompilationRules) {
           using(empty, RowF(elements.map(x => x.copy(x.value.right.get)), attrs))
         }
 
-      case otherwise => Left(ErrorFound(s"TODO map: ${otherwise}"))
+      case otherwise => Left(ErrorFound(s"TODO map: $otherwise"))
 
     }
   }
@@ -89,11 +87,11 @@ class CompileDefaults(rules: AttributeCompilationRules) {
   private val generator = scheme.cata(algebra)
 
   def compile(schema: Schema): Either[String, Attr[SchemaF, Data]] = {
-    val zz = generator(schema)
-    zz.leftMap(_.asString)
+    val compileFn = generator(schema)
+    compileFn.leftMap(_.asString)
   }
 }
 
 object CompileDefaults {
-  def apply(rules: AttributeCompilationRules): CompileDefaults = new CompileDefaults(rules)
+  def apply(rules: AttributeCompilationRules = DefaultCompilationRules): CompileDefaults = new CompileDefaults(rules)
 }
