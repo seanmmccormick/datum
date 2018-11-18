@@ -23,6 +23,12 @@ package object data {
     Fix(RowValue(elements))
   }
 
+  def row(
+    elements: Data*
+  ): Data = {
+    Fix(RowValue(Vector(elements: _*)))
+  }
+
   def text(value: String): Data = {
     Fix[DataF](TextValue(value))
   }

@@ -13,11 +13,11 @@ package object schemas {
   }
 
   def row(attributes: Map[AttributeKey, Attribute] = Map.empty)(elements: Column[Schema]*): Schema = {
-    Fix(RowF(Vector(elements: _*)))
+    Fix(RowF(Vector(elements: _*), attributes))
   }
 
   def union(attributes: Map[AttributeKey, Attribute] = Map.empty)(alternatives: Schema*): Schema = {
-    Fix(UnionF(List(alternatives: _*)))
+    Fix(UnionF(List(alternatives: _*), attributes))
   }
 
   def value(

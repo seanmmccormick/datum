@@ -78,7 +78,7 @@ class CompileDefaults(rules: AttributeCompilationRules) {
             val path = s"[${if (header.isDefined) header.get else s"$idx"}]"
             Left(err.updatePath(path))
         } getOrElse {
-          using(empty, RowF(elements.map(x => x.copy(x.value.right.get))))
+          using(empty, RowF(elements.map(x => x.copy(x.value.right.get)), attrs))
         }
 
       case otherwise => Left(ErrorFound(s"TODO map: ${otherwise}"))

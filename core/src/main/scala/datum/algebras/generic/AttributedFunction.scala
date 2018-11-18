@@ -1,7 +1,9 @@
 package datum.algebras.generic
 import datum.patterns.attributes.Attributed
 import datum.patterns.schemas._
+import qq.droste.data.{Attr, AttrF, Fix}
 import qq.droste.{Algebra, scheme}
+import qq.droste.data.prelude._
 
 trait AttributedFunction[In, Out] {
 
@@ -35,5 +37,29 @@ trait AttributedFunction[In, Out] {
 
   def makeFn(schema: Schema): In => Out = {
     generator(schema)
+  }
+}
+
+object Wurt {
+  type WithSchema[In, Out] = cats.data.Reader[SchemaF[In => Out], Out]
+
+}
+import Wurt._
+
+trait AnnotatedFunction[Annotation, In, Out] {
+
+  def modify: Out => WithSchema[In, Out]
+
+  def base: Algebra[AttrF[SchemaF, Annotation, ?], In => Out]
+
+  val algebra: Algebra[AttrF[SchemaF, Annotation, ?], In => Out] =
+    Algebra[AttrF[SchemaF, Annotation, ?], In => Out] { v => in =>
+      modify(base(v)(in)).run(v.lower)
+    }
+
+  private val generator = scheme.cata(algebra)
+
+  def makeFn(annotated: Attr[SchemaF, Annotation]): In => Out = {
+    generator(annotated)
   }
 }

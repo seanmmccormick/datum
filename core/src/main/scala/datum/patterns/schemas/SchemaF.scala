@@ -51,13 +51,13 @@ object SchemaF {
           }
           G.map(tl)(x => RowF(x, attrs))
 
-        case ObjF(fields, meta) =>
+        case ObjF(fields, attrs) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
-          G.map(tm)(x => ObjF(x, meta))
+          G.map(tm)(x => ObjF(x, attrs))
 
-        case UnionF(alts, meta) =>
+        case UnionF(alts, attrs) =>
           val tl = Traverse[List].traverse(alts)(f)
-          G.map(tl)(x => UnionF(x, meta))
+          G.map(tl)(x => UnionF(x, attrs))
 
         case ArrayF(e, meta) => G.map(f(e))(x => ArrayF(x, meta))
       }
