@@ -14,6 +14,7 @@ object AttributeReadWriter {
     case LabelF(name, value)     => Js.Obj("attr" -> "label", name -> value)
     case AndF(lhs, rhs)          => Js.Obj("attr" -> "and", "left" -> lhs, "right" -> rhs)
     case OrF(lhs, rhs)           => Js.Obj("attr" -> "or", "left" -> lhs, "right" -> rhs)
+    case ListF(vs)               => Js.Arr(vs)
   }
 
   val coalgebra: Coalgebra[AttributesF, Js.Value] = Coalgebra[AttributesF, Js.Value] {
@@ -22,6 +23,8 @@ object AttributeReadWriter {
     case Js.Num(value) => NumericPropertyF(value)
 
     case Js.Bool(value) => BooleanPropertyF(value)
+
+    case Js.Arr(value) => ListF(value.toVector)
 
     case Js.Obj(fields) if fields("attr").str == "label" =>
       val (name, value) = fields.filterKeys(_ != "attr").head
@@ -50,11 +53,10 @@ trait AttributeReadWriter {
     )
 
   implicit val attrKeyReadWrite: ReadWriter[AttributeKey] = upickle.default
-    .readwriter[Js.Value]
+    .readwriter[String]
     .bimap[AttributeKey](
-      ak => ak.key, {
-        case Js.Str(x) => AttributeKey(x)
-      }
+      _.key,
+      AttributeKey.apply
     )
 
   implicit val mapAsObj: ReadWriter[Map[AttributeKey, Attribute]] = upickle.default

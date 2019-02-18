@@ -32,6 +32,18 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
         "attributes" -> writeJs(attributes)
       )
 
+    case ArrayF(element, attributes) =>
+      Js.Obj(
+        "array" -> element,
+        "attributes" -> writeJs(attributes)
+      )
+
+    case UnionF(alternatives, attributes) =>
+      Js.Obj(
+        "union" -> Js.Arr(alternatives),
+        "attributes" -> writeJs(attributes)
+      )
+
     case ValueF(tpe, attributes) =>
       Js.Obj(
         "type" -> Type.asString(tpe),
@@ -51,6 +63,14 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
         Column[Js.Value](colJs("schema"), header)
       }.toVector
       RowF(elements, attrs)
+
+    case Js.Obj(fields) if fields.contains("array") =>
+      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      ArrayF(fields("array"), attrs)
+
+    case Js.Obj(fields) if fields.contains("union") =>
+      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      UnionF(fields("union").arr.toList, attrs)
 
     case Js.Obj(fields) if fields.contains("fields") =>
       val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))

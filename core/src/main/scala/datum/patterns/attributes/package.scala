@@ -48,4 +48,7 @@ package object attributes {
   def or(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](OrF(left, right))
 
   def label(name: String, attr: Attribute): Attribute = Fix.apply[AttributesF](LabelF(name, attr))
+
+  def collection(values: Attribute*): Attribute = Fix.apply[AttributesF](ListF(values.toVector))
+
 }
