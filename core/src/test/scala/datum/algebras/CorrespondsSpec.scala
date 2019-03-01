@@ -1,5 +1,6 @@
 package datum.algebras
 
+import datum.algebras.generic.Corresponds2
 import datum.modifiers.Optional
 import datum.{DataGen, SchemaGen}
 import datum.patterns.schemas.{IntType, Schema, TextType}
@@ -22,21 +23,23 @@ class CorrespondsSpec extends WordSpec with Checkers with Matchers {
 
   implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary(genDataFromSchema)
 
-  val correspondsFn = new Corresponds(Corresponds.optional)
+  // val correspondsFn = new Corresponds(Corresponds.optional)
+
+  val makeFn = Corresponds2.using(Corresponds2.optional(Corresponds2.algebra))
 
   val otherSchema: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType),
     "bar" -> schemas.value(TextType)
   )
 
-  val negFn: Data => Boolean = correspondsFn.makeFn(otherSchema)
+  val negFn: Data => Boolean = makeFn(otherSchema)
 
   "The correspondence function" should {
     "work for schema generated data" in {
       check {
         forAll { generated: (Schema, List[Data]) =>
           val (schema, data) = generated
-          val fn: Data => Boolean = correspondsFn.makeFn(schema)
+          val fn: Data => Boolean = makeFn(schema)
           data.forall(fn) && (data.isEmpty || !data.forall(negFn))
         }
       }
@@ -50,7 +53,7 @@ class CorrespondsSpec extends WordSpec with Checkers with Matchers {
         "maybe" -> schemas.value(IntType, optional)
       )
 
-      val checkFn = correspondsFn.makeFn(opt)
+      val checkFn = makeFn(opt)
 
       val d1 = data.obj(
         "required" -> data.integer(1),

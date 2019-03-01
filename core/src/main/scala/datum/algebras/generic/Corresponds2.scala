@@ -1,21 +1,19 @@
-package datum.algebras
-import datum.algebras.generic.AttributedFunction
+package datum.algebras.generic
+
 import datum.modifiers.Optional
-import datum.patterns.attributes.{Attributed, Modifiable}
+import datum.patterns.attributes.Attributed
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
 import qq.droste.{Algebra, scheme}
 import qq.droste.data.Fix
 
-class Corresponds(
-  override val modifier: Boolean => Attributed[Boolean] = Attributed.identity
-) extends AttributedFunction[Data, Boolean] {
+object Corresponds2 {
 
   private def matchValue(fn: PartialFunction[DataF[Fix[DataF]], Boolean])(value: Data): Boolean =
     fn.applyOrElse[DataF[Fix[DataF]], Boolean](Fix.un[DataF](value), _ => false)
 
-  override val algebra: Algebra[SchemaF, Data => Boolean] = Algebra {
+  val algebra: Algebra[SchemaF, Data => Boolean] = Algebra {
 
     case ObjF(schemaFields, _) =>
       Fix.un[DataF](_) match {
@@ -64,18 +62,16 @@ class Corresponds(
     case ValueF(BytesType, _)     => matchValue { case BytesValue(_)     => true }
 
   }
-}
 
-object Corresponds {
-
-  def optional: Boolean => Attributed[Boolean] = {
-    case true  => Attributed.pure(true)
-    case false => Attributed { _.contains(Optional.key) }
+  def optional(alg: Algebra[SchemaF, Data => Boolean]): Algebra[SchemaF, Data => Boolean] = Algebra {
+    case x if x.attributes.contains(Optional.key) => {
+      case data.empty => true
+      case otherwise  => alg(x)(otherwise)
+    }
+    case otherwise => alg(otherwise)
   }
 
-
-
-  def using(algebra: Algebra[SchemaF, Data => Boolean]): Schema => Data => Boolean = {
+  def using(algebra: Algebra[SchemaF, Data => Boolean] = algebra): Schema => Data => Boolean = {
     val fn = scheme.cata(algebra)
     val result: Schema => Data => Boolean = { s =>
       fn(s)
@@ -83,3 +79,5 @@ object Corresponds {
     result
   }
 }
+
+

@@ -30,7 +30,7 @@ lazy val commonSettings = Seq(
 
 // Modules
 lazy val datum = (project in file("."))
-  .aggregate(core, ujson)
+  .aggregate(core, gen, testCore, ujson)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings)
@@ -50,6 +50,15 @@ lazy val gen = (project in file("gen"))
   )
   .dependsOn(core)
 
+// sub project so that test code can depend on both core and gen
+// otherwise there is a circular dependency
+lazy val testCore = (project in file("test-core"))
+  .settings(commonSettings)
+  .settings(
+    name := "datum-core-test"
+  )
+  .dependsOn(core, gen % Test)
+
 lazy val ujson = (project in file("ujson"))
   .settings(commonSettings)
   .settings(
@@ -58,5 +67,4 @@ lazy val ujson = (project in file("ujson"))
       "com.lihaoyi" %% "upickle" % "0.6.6"
     )
   )
-  .dependsOn(core)
-  .dependsOn(gen % Test)
+  .dependsOn(core, gen % Test)

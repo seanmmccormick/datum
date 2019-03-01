@@ -12,32 +12,48 @@ import scala.collection.immutable.SortedMap
 
 sealed trait SchemaF[+R] extends Product with Serializable {
   def attributes: AttributeMap
+  def withAttributes(attribute: (String, Attribute)*): SchemaF[R]
 }
 
 final case class ObjF[R](
   fields: SortedMap[String, R],
   attributes: AttributeMap = Map.empty
-) extends SchemaF[R]
+) extends SchemaF[R] {
+  override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
+    ObjF(fields, attributes ++ additional)
+}
 
 final case class RowF[R](
   elements: Vector[Column[R]],
   attributes: AttributeMap = Map.empty
-) extends SchemaF[R]
+) extends SchemaF[R] {
+  override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
+    RowF(elements, attributes ++ additional)
+}
 
 final case class ArrayF[R](
   element: R,
   attributes: AttributeMap = Map.empty
-) extends SchemaF[R]
+) extends SchemaF[R] {
+  override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
+    ArrayF(element, attributes ++ additional)
+}
 
 final case class UnionF[R](
   alternatives: List[R],
   attributes: AttributeMap = Map.empty
-) extends SchemaF[R]
+) extends SchemaF[R] {
+  override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
+    UnionF(alternatives, attributes ++ additional)
+}
 
 final case class ValueF(
   tpe: Type,
   attributes: AttributeMap = Map.empty
-) extends SchemaF[Nothing]
+) extends SchemaF[Nothing] {
+  override def withAttributes(additional: (String, Attribute)*): SchemaF[Nothing] =
+    ValueF(tpe, attributes ++ additional)
+}
 
 object SchemaF {
   implicit val traverse: Traverse[SchemaF] = new DefaultTraverse[SchemaF] {

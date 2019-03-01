@@ -33,4 +33,5 @@ package object schemas {
   ): Schema = {
     Fix.apply[SchemaF](ValueF(tpe, Map(attributes: _*)))
   }
+
 }
