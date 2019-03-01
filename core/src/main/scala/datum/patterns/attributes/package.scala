@@ -47,4 +47,10 @@ package object attributes {
 
   def collection(values: Attribute*): Attribute = Fix.apply[AttributesF](Collection(values.toVector))
 
+  //Some implicit conversions for building attributes
+  implicit def textProp(v: String): Attribute = property(v)
+  implicit def numProp(v: Double): Attribute = property(v)
+  implicit def boolProp(v: Boolean): Attribute = property(v)
+  implicit def liftPair[T](x: (String, T))(implicit fn: T => Attribute): (String, Attribute) = (x._1, fn(x._2))
+
 }

@@ -1,4 +1,3 @@
-
 // Versions
 val catsV = "1.4.0"
 val drosteV = "0.5.0"
@@ -15,7 +14,8 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-unchecked",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth","40"
+    "-Ypatmat-exhaust-depth",
+    "40"
   ),
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core" % catsV,
@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
 )
 
 // Modules
-lazy val root = (project in file("."))
+lazy val datum = (project in file("."))
   .aggregate(core, ujson)
 
 lazy val core = (project in file("core"))
@@ -37,6 +37,18 @@ lazy val core = (project in file("core"))
   .settings(
     name := "datum-core",
   )
+
+lazy val gen = (project in file("gen"))
+  .settings(commonSettings)
+  .settings(
+    name := "datum-gen",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.0.5",
+      "io.chrisdavenport" %% "cats-scalacheck" % "0.1.0",
+      "com.47deg" %% "scalacheck-toolbox-datetime" % "0.2.5"
+    )
+  )
+  .dependsOn(core)
 
 lazy val ujson = (project in file("ujson"))
   .settings(commonSettings)
@@ -47,3 +59,4 @@ lazy val ujson = (project in file("ujson"))
     )
   )
   .dependsOn(core)
+  .dependsOn(gen % Test)

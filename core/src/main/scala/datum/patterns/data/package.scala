@@ -73,7 +73,7 @@ package object data {
     Fix[DataF](BytesValue(value))
   }
 
-  def empty: Data = {
+  val empty: Data = {
     Fix[DataF](EmptyValue)
   }
 }
