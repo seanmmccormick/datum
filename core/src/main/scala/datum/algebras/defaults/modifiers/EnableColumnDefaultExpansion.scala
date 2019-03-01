@@ -19,9 +19,9 @@ import scala.collection.mutable
 
 object EnableColumnDefaultExpansion {
 
-  val key: AttributeKey = "enable-default-expansion".asAttributeKey
+  val key: String = "enable-default-expansion"
 
-  def enable: (AttributeKey, Attribute) = key -> property(true)
+  def enable: (String, Attribute) = key -> property(true)
 
   private def columnExpansionFn(
     inp: Data,
@@ -45,7 +45,7 @@ object EnableColumnDefaultExpansion {
 
   val algebra: Algebra[AttrF[SchemaF, Data, ?], Data => Data] =
     Algebra[AttrF[SchemaF, Data, ?], Data => Data] {
-      case AttrF(default, RowF(elements, attributes)) =>
+      case AttrF(_, RowF(elements, _)) =>
         inp =>
           Fix.un[DataF](inp) match {
             case RowValue(values) => columnExpansionFn(inp, values, elements)

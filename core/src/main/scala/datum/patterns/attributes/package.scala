@@ -6,7 +6,7 @@ import qq.droste.data.Fix
 package object attributes {
   type Attribute = Fix[AttributesF]
 
-  type AttributeMap = Map[AttributeKey, Attribute]
+  type AttributeMap = Map[String, Attribute]
 
   type Attributed[T] = Reader[AttributeMap, T]
   type Modifiable[T] = State[AttributeMap, T]
@@ -23,10 +23,6 @@ package object attributes {
     def identity[A]: A => Attributed[A] = pure
   }
 
-  implicit class AttributeStringOps(inp: String) {
-    def asAttributeKey: AttributeKey = AttributeKey(inp)
-  }
-
   implicit class AttributedAsKleisliOps[A](foo: A => Attributed[A]) {
 
     @inline
@@ -37,18 +33,18 @@ package object attributes {
     def >=>(rhs: A => Attributed[A]): A => Attributed[A] = composeWith(rhs)
   }
 
-  def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BooleanPropertyF(flag))
+  def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BoolProperty(flag))
 
-  def property(text: String): Attribute = Fix.apply[AttributesF](TextPropertyF(text))
+  def property(text: String): Attribute = Fix.apply[AttributesF](Property(text))
 
-  def property(value: Double): Attribute = Fix.apply[AttributesF](NumericPropertyF(value))
+  def property(value: Double): Attribute = Fix.apply[AttributesF](NumProperty(value))
 
-  def and(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](AndF(left, right))
+  def and(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](And(left, right))
 
-  def or(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](OrF(left, right))
+  def or(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](Or(left, right))
 
-  def label(name: String, attr: Attribute): Attribute = Fix.apply[AttributesF](LabelF(name, attr))
+  def label(name: String, attr: Attribute): Attribute = Fix.apply[AttributesF](Label(name, attr))
 
-  def collection(values: Attribute*): Attribute = Fix.apply[AttributesF](ListF(values.toVector))
+  def collection(values: Attribute*): Attribute = Fix.apply[AttributesF](Collection(values.toVector))
 
 }

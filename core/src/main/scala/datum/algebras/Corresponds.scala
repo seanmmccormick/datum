@@ -1,5 +1,5 @@
 package datum.algebras
-import datum.algebras.generic.{AttributedFunction, ModifiableFunction}
+import datum.algebras.generic.AttributedFunction
 import datum.modifiers.Optional
 import datum.patterns.attributes.{Attributed, Modifiable}
 import datum.patterns.data

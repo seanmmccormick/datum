@@ -1,7 +1,7 @@
 package datum.patterns.schemas
 
-import datum.patterns.attributes.{Attribute, AttributeKey}
-import cats.{Applicative, CoflatMap, Traverse}
+import datum.patterns.attributes.{Attribute, AttributeMap}
+import cats.{Applicative, Traverse}
 import cats.instances.sortedMap._
 import cats.instances.string._
 import cats.instances.vector._
@@ -11,32 +11,32 @@ import qq.droste.util.DefaultTraverse
 import scala.collection.immutable.SortedMap
 
 sealed trait SchemaF[+R] extends Product with Serializable {
-  def attributes: Map[AttributeKey, Attribute]
+  def attributes: AttributeMap
 }
 
 final case class ObjF[R](
   fields: SortedMap[String, R],
-  attributes: Map[AttributeKey, Attribute] = Map.empty
+  attributes: AttributeMap = Map.empty
 ) extends SchemaF[R]
 
 final case class RowF[R](
   elements: Vector[Column[R]],
-  attributes: Map[AttributeKey, Attribute] = Map.empty
+  attributes: AttributeMap = Map.empty
 ) extends SchemaF[R]
 
 final case class ArrayF[R](
   element: R,
-  attributes: Map[AttributeKey, Attribute] = Map.empty
+  attributes: AttributeMap = Map.empty
 ) extends SchemaF[R]
 
 final case class UnionF[R](
   alternatives: List[R],
-  attributes: Map[AttributeKey, Attribute] = Map.empty
+  attributes: AttributeMap = Map.empty
 ) extends SchemaF[R]
 
 final case class ValueF(
   tpe: Type,
-  attributes: Map[AttributeKey, Attribute] = Map.empty
+  attributes: AttributeMap = Map.empty
 ) extends SchemaF[Nothing]
 
 object SchemaF {

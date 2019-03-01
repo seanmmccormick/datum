@@ -1,7 +1,7 @@
 package datum.ujsonlib.schemas
 
 import datum.ujsonlib.attributes.AttributeReadWriter
-import datum.patterns.attributes.{Attribute, AttributeKey}
+import datum.patterns.attributes.Attribute
 import datum.patterns.schemas._
 import qq.droste.{Algebra, Coalgebra, scheme}
 import ujson.Js
@@ -53,11 +53,11 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
 
   val coalgebra: Coalgebra[SchemaF, Js.Value] = Coalgebra[SchemaF, Js.Value] {
     case Js.Obj(fields) if fields.contains("type") =>
-      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       ValueF(Type.fromString(fields("type").str).get, attrs)
 
     case Js.Obj(fields) if fields.contains("columns") =>
-      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       val elements = fields("columns").arr.view.map { colJs =>
         val header = colJs.obj.get("header").map(_.str)
         Column[Js.Value](colJs("schema"), header)
@@ -65,15 +65,15 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
       RowF(elements, attrs)
 
     case Js.Obj(fields) if fields.contains("array") =>
-      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       ArrayF(fields("array"), attrs)
 
     case Js.Obj(fields) if fields.contains("union") =>
-      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       UnionF(fields("union").arr.toList, attrs)
 
     case Js.Obj(fields) if fields.contains("fields") =>
-      val attrs = readJs[Map[AttributeKey, Attribute]](fields("attributes"))
+      val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       ObjF(SortedMap(fields("fields").obj.toSeq: _*), attrs)
   }
 

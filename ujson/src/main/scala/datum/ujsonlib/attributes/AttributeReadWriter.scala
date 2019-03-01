@@ -8,31 +8,31 @@ import upickle.default._
 object AttributeReadWriter {
 
   val algebra: Algebra[AttributesF, Js.Value] = Algebra {
-    case TextPropertyF(value)    => Js.Str(value)
-    case NumericPropertyF(value) => Js.Num(value)
-    case BooleanPropertyF(value) => Js.Bool(value)
-    case LabelF(name, value)     => Js.Obj("attr" -> "label", name -> value)
-    case AndF(lhs, rhs)          => Js.Obj("attr" -> "and", "left" -> lhs, "right" -> rhs)
-    case OrF(lhs, rhs)           => Js.Obj("attr" -> "or", "left" -> lhs, "right" -> rhs)
-    case ListF(vs)               => Js.Arr(vs)
+    case Property(value)     => Js.Str(value)
+    case NumProperty(value)  => Js.Num(value)
+    case BoolProperty(value) => Js.Bool(value)
+    case Label(name, value)  => Js.Obj("attr" -> "label", name -> value)
+    case And(lhs, rhs)       => Js.Obj("attr" -> "and", "left" -> lhs, "right" -> rhs)
+    case Or(lhs, rhs)        => Js.Obj("attr" -> "or", "left" -> lhs, "right" -> rhs)
+    case Collection(vs)      => Js.Arr(vs)
   }
 
   val coalgebra: Coalgebra[AttributesF, Js.Value] = Coalgebra[AttributesF, Js.Value] {
-    case Js.Str(value) => TextPropertyF(value)
+    case Js.Str(value) => Property(value)
 
-    case Js.Num(value) => NumericPropertyF(value)
+    case Js.Num(value) => NumProperty(value)
 
-    case Js.Bool(value) => BooleanPropertyF(value)
+    case Js.Bool(value) => BoolProperty(value)
 
-    case Js.Arr(value) => ListF(value.toVector)
+    case Js.Arr(value) => Collection(value.toVector)
 
     case Js.Obj(fields) if fields("attr").str == "label" =>
       val (name, value) = fields.filterKeys(_ != "attr").head
-      LabelF(name, value)
+      Label(name, value)
 
-    case Js.Obj(fields) if fields("attr").str == "and" => AndF(fields("left"), fields("right"))
+    case Js.Obj(fields) if fields("attr").str == "and" => And(fields("left"), fields("right"))
 
-    case Js.Obj(fields) if fields("attr").str == "or" => OrF(fields("left"), fields("right"))
+    case Js.Obj(fields) if fields("attr").str == "or" => Or(fields("left"), fields("right"))
   }
 }
 
@@ -51,17 +51,4 @@ trait AttributeReadWriter {
         fromJsonFn(js)
       }
     )
-
-  implicit val attrKeyReadWrite: ReadWriter[AttributeKey] = upickle.default
-    .readwriter[String]
-    .bimap[AttributeKey](
-      _.key,
-      AttributeKey.apply
-    )
-
-  implicit val mapAsObj: ReadWriter[Map[AttributeKey, Attribute]] = upickle.default
-    .readwriter[Map[String, Attribute]]
-    .bimap(x => {
-      x.map { case (key, value) => (key.key, value) }
-    }, y => y.map { case (key, value) => (AttributeKey(key), value) })
 }

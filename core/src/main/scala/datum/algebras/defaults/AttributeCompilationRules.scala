@@ -10,12 +10,10 @@ import qq.droste.data.Fix
 import qq.droste.data.prelude._
 import qq.droste.{Algebra, AlgebraM}
 
-import scala.util.Try
-
 trait CompileBoolean {
 
   def boolean(attribute: Attribute): Either[String, Data] = Fix.un[AttributesF](attribute) match {
-    case BooleanPropertyF(value) => Right(data.boolean(value))
+    case BoolProperty(value) => Right(data.boolean(value))
     case _                       => Left("Invalid Property - expected a boolean property")
   }
 }
@@ -23,7 +21,7 @@ trait CompileBoolean {
 trait CompileInteger {
 
   def integer(attribute: Attribute): Either[String, Data] = Fix.un[AttributesF](attribute) match {
-    case NumericPropertyF(value) => Either.catchNonFatal(data.integer(value.toInt)).leftMap(_.getMessage)
+    case NumProperty(value) => Either.catchNonFatal(data.integer(value.toInt)).leftMap(_.getMessage)
     case _                       => Left("Invalid Property - expected a numeric property")
   }
 }
@@ -31,7 +29,7 @@ trait CompileInteger {
 trait CompileText {
 
   def text(attribute: Attribute): Either[String, Data] = Fix.un[AttributesF](attribute) match {
-    case TextPropertyF(value) => Right(data.text(value))
+    case Property(value) => Right(data.text(value))
     case _                    => Left("Invalid Property - expected a text")
   }
 }
@@ -40,7 +38,7 @@ trait CompiledZonedTime {
   import java.time._
 
   val algebra: AlgebraM[Either[String, ?], AttributesF, Data] = AlgebraM[Either[String, ?], AttributesF, Data] {
-    case TextPropertyF(value) =>
+    case Property(value) =>
       Either.catchNonFatal {
         val result = ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME)
         data.zonedTime(result)
