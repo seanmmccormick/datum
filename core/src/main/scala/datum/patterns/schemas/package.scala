@@ -17,7 +17,7 @@ package object schemas {
   }
 
   def union(attributes: AttributeMap = Map.empty)(alternatives: Schema*): Schema = {
-    Fix(UnionF(List(alternatives: _*), attributes))
+    Fix(UnionF(Vector(alternatives: _*), attributes))
   }
 
   def value(

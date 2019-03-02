@@ -23,7 +23,6 @@ lazy val commonSettings = Seq(
     "io.higherkindness" %% "droste-core" % drosteV,
     "com.lihaoyi" %% "pprint" % "0.5.2",
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-    "io.chrisdavenport" %% "cats-scalacheck" % "0.1.0" % Test,
     "com.47deg" %% "scalacheck-toolbox-datetime" % "0.2.5" % Test
   )
 )

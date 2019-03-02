@@ -5,7 +5,6 @@ import cats.{Applicative, Traverse}
 import cats.instances.sortedMap._
 import cats.instances.string._
 import cats.instances.vector._
-import cats.instances.list._
 import qq.droste.util.DefaultTraverse
 
 import scala.collection.immutable.SortedMap
@@ -32,15 +31,15 @@ final case class RowF[R](
 }
 
 final case class ArrayF[R](
-  element: R,
+  conforms: R,
   attributes: AttributeMap = Map.empty
 ) extends SchemaF[R] {
   override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
-    ArrayF(element, attributes ++ additional)
+    ArrayF(conforms, attributes ++ additional)
 }
 
 final case class UnionF[R](
-  alternatives: List[R],
+  alternatives: Vector[R],
   attributes: AttributeMap = Map.empty
 ) extends SchemaF[R] {
   override def withAttributes(additional: (String, Attribute)*): SchemaF[R] =
@@ -72,7 +71,7 @@ object SchemaF {
           G.map(tm)(x => ObjF(x, attrs))
 
         case UnionF(alts, attrs) =>
-          val tl = Traverse[List].traverse(alts)(f)
+          val tl = Traverse[Vector].traverse(alts)(f)
           G.map(tl)(x => UnionF(x, attrs))
 
         case ArrayF(e, meta) => G.map(f(e))(x => ArrayF(x, meta))

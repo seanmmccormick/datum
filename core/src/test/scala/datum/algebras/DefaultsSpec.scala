@@ -5,11 +5,10 @@ import datum.patterns.{data, schemas}
 import datum.patterns.schemas._
 import datum.patterns.attributes._
 import org.scalatest.{Matchers, WordSpec}
-import org.scalatest.prop.Checkers
 import datum.patterns.data.{Data, DataF, ObjValue, RowValue}
 import qq.droste.data.Fix
 
-class DefaultsSpec extends WordSpec with Checkers with Matchers {
+class DefaultsSpec extends WordSpec with Matchers {
 
   /* Constructs a "schema compiler" that has rules for taking
    * the schema's "default" Attributes and converting it into Data.

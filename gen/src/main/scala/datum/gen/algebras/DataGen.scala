@@ -2,6 +2,7 @@ package datum.gen.algebras
 
 import java.time.ZonedDateTime
 
+import cats.Traverse
 import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
@@ -10,11 +11,25 @@ import datum.modifiers.Optional
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.cats.implicits._
-import qq.droste.{AlgebraM, scheme}
+import qq.droste.{Algebra, AlgebraM, scheme}
 
 object DataGen {
 
-  val algebra: AlgebraM[Gen, SchemaF, Data] = AlgebraM {
+  private val helpers: AlgebraM[Gen, SchemaF, Data] = AlgebraM {
+    case ObjF(fields, _) =>
+      Gen.chooseNum(0.0, 1.0).map { x =>
+        data.obj(fields.filter {
+          case (_, data.empty) => x <= 0.5
+          case _               => true
+        })
+      }
+
+    case RowF(elements, _) => data.row(elements.map(_.value))
+
+    case err => throw new Exception(s"Impossible: ${pprint.apply(err)}")
+  }
+
+  val algebra: Algebra[SchemaF, Gen[Data]] = Algebra {
     case ValueF(IntType, _)     => arbitrary[Int].map(data.integer)
     case ValueF(LongType, _)    => arbitrary[Long].map(data.long)
     case ValueF(FloatType, _)   => arbitrary[Float].map(data.float)
@@ -40,25 +55,19 @@ object DataGen {
 
     case ValueF(ZonedTimeType, _) => arbitrary[ZonedDateTime].map(data.zonedTime)
 
-    case ObjF(fields, _) =>
-      Gen.chooseNum(0.0, 1.0).map { x =>
-        data.obj(fields.filter {
-          case (_, data.empty) => x <= 0.5
-          case _               => true
-        })
+    case ArrayF(element, _) =>
+      Gen.resize(5, Gen.containerOf[Vector, Data](element).map(data.row))
+
+    case UnionF(alternatives, _) =>
+      Gen.chooseNum(0, alternatives.length - 1).flatMap {
+        alternatives(_)
       }
 
-    case RowF(elements, _) => data.row(elements.map(_.value))
-
-    case UnionF(alternatives, _) => Gen.oneOf(alternatives)
-
-    case ohno =>
-      println(s"======================= FAILED TO MATCH: ${ohno}")
-      ???
-
+    case other =>
+      Traverse[SchemaF].sequence(other).flatMap(helpers(_))
   }
 
-  def optional(alg: AlgebraM[Gen, SchemaF, Data]): AlgebraM[Gen, SchemaF, Data] = AlgebraM { schema =>
+  def optional(alg: Algebra[SchemaF, Gen[Data]]): Algebra[SchemaF, Gen[Data]] = Algebra { schema =>
     if (schema.attributes.contains(Optional.key)) {
       Gen.frequency(1 -> Gen.const(data.empty), 5 -> alg(schema))
     } else {
@@ -66,8 +75,8 @@ object DataGen {
     }
   }
 
-  def using(alg: AlgebraM[Gen, SchemaF, Data] = algebra): Schema => Gen[Data] = {
-    val fn = scheme.cataM(alg)
+  def using(alg: Algebra[SchemaF, Gen[Data]] = algebra): Schema => Gen[Data] = {
+    val fn = scheme.cata(alg)
     val result: Schema => Gen[Data] = { s =>
       fn(s)
     }

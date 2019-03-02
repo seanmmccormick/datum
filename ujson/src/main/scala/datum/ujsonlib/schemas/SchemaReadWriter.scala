@@ -70,7 +70,7 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
 
     case Js.Obj(fields) if fields.contains("union") =>
       val attrs = readJs[Map[String, Attribute]](fields("attributes"))
-      UnionF(fields("union").arr.toList, attrs)
+      UnionF(fields("union").arr.toVector, attrs)
 
     case Js.Obj(fields) if fields.contains("fields") =>
       val attrs = readJs[Map[String, Attribute]](fields("attributes"))

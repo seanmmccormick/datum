@@ -12,7 +12,7 @@ import org.scalacheck.Prop._
 import org.scalatest.prop.Checkers
 
 
-class DataGenSpec extends WordSpec with Checkers {
+class DataGenProps extends WordSpec with Checkers {
 
   val test: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType, Optional.key -> true),
@@ -23,7 +23,7 @@ class DataGenSpec extends WordSpec with Checkers {
     "no" -> schemas.value(IntType)
   )
 
-  val generator = DataGen.using(DataGen.optional(DataGen.algebra))
+  val generator = DataGen.using() //DataGen.using(DataGen.optional(DataGen.algebra))
 
   val testGen = generator(test)
 
@@ -35,11 +35,11 @@ class DataGenSpec extends WordSpec with Checkers {
 
   implicit val arb: Arbitrary[List[Data]] = Arbitrary(genDataFromSchema)
 
-  val corresponds = new Corresponds(Corresponds.optional)
+  val correspondsTo = Corresponds.using(Corresponds.optional(Corresponds.algebra))
 
-  val correspondsTest: Data => Boolean = corresponds.makeFn(test)
+  val correspondsTest: Data => Boolean = correspondsTo(test)
 
-  val correspondsOther: Data => Boolean = corresponds.makeFn(other)
+  val correspondsOther: Data => Boolean = correspondsTo(other)
 
   "Generated Data" should {
     "correspond to a particular schema" in {

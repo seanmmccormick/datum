@@ -55,7 +55,7 @@ class SchemaGen(
   }
 
   private def genUnion(level: Int): Gen[SchemaF[Seed]] = {
-    Gen.resize(3, Gen.nonEmptyListOf(nest(level)).map { alts =>
+    Gen.resize(3, Gen.nonEmptyContainerOf[Vector, Seed](nest(level)).map { alts =>
       UnionF[Seed](alts)
     })
   }
@@ -127,21 +127,4 @@ object SchemaGen {
     }
     result
   }
-}
-
-object TestIt extends App {
-  import SchemaGen._
-
-  val neat = Seed(AnObj, 5)
-
-  //val gen = using(optional(default.coalgebra))(neat)
-
-  val alt = new SchemaGen(allowedValueTypes = Vector(TextType, IntType), allowedNestedTypes = Vector(
-    1 -> AValue,
-    1 -> ATable
-  ))
-
-  val gen = using(optional(alt.coalgebra))(neat)
-
-  pprint.pprintln(gen.sample.get)
 }
