@@ -15,14 +15,14 @@ import qq.droste.syntax.all._
 
 class SchemaGenSpec extends WordSpec with Checkers with Matchers {
 
-  val correspondsTo = Corresponds.using(Corresponds.optional(Corresponds.algebra))
+  val correspondsTo = Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
   val ASeed: Gen[Seed] = Gen.oneOf(AnObj, AnArray, ATable, AUnion).map { Seed(_, 5) }
 
   "Schema Generation" should {
     "support optional values" in {
       implicit val gen: Arbitrary[Schema] = Arbitrary {
-        val fn = SchemaGen.using(SchemaGen.optional(SchemaGen.default.coalgebra))
+        val fn = SchemaGen.define(SchemaGen.optional(SchemaGen.default.coalgebra))
         Gen.oneOf(AnObj, AnArray, ATable).flatMap(n => fn(Seed(n, 5)))
       }
       check {

@@ -12,9 +12,9 @@ import org.scalatest.prop.Checkers
 
 class CorrespondsProps extends WordSpec with Checkers {
 
-  private val genSchema = SchemaGen.using()(Seed(AnObj, 5))
+  private val genSchema = SchemaGen.define()(Seed(AnObj, 5))
 
-  private val dataGenFn = DataGen.using(DataGen.algebra)
+  private val dataGenFn = DataGen.define(DataGen.algebra)
 
   val otherSchema: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType),
@@ -32,7 +32,7 @@ class CorrespondsProps extends WordSpec with Checkers {
   implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary(genDataFromSchema)
 
   private val correspondsTo: Schema => Data => Boolean =
-    Corresponds.using(Corresponds.optional(Corresponds.algebra))
+    Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
   private val negFn: Data => Boolean = correspondsTo(otherSchema)
 

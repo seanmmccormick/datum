@@ -8,7 +8,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 class CorrespondsSpec extends WordSpec  with Matchers {
 
-  val correspondsTo = Corresponds.using(Corresponds.optional(Corresponds.algebra))
+  val correspondsTo = Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
   val otherSchema: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType),

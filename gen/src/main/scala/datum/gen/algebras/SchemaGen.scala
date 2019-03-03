@@ -79,15 +79,15 @@ object SchemaGen {
     val all: Vector[Type] = Vector(
       IntType,
       LongType,
-      InstantType,
+      TimestampType,
       DoubleType,
       FloatType,
       TextType,
       BytesType,
       BooleanType,
       DateType,
-      LocalTimeType,
-      ZonedTimeType
+      DateTimeType,
+      ZonedDateTimeType
     )
   }
 
@@ -123,26 +123,11 @@ object SchemaGen {
     alg(seed).flatMap(schema => Gen.oneOf(schema, schema.withAttributes(Optional.key -> true)))
   }
 
-  def using(coalg: CoalgebraM[Gen, SchemaF, Seed] = default.coalgebra): Seed => Gen[Schema] = {
+  def define(coalg: CoalgebraM[Gen, SchemaF, Seed] = default.coalgebra): Seed => Gen[Schema] = {
     val fn = scheme.anaM(coalg)
     val result: Seed => Gen[Schema] = { seed =>
       fn(seed)
     }
     result
   }
-}
-
-object TestIt extends App {
-  import SchemaGen._
-
-  val fn = SchemaGen.using(SchemaGen.optional(simple.coalgebra))
-
-  val dataFn = DataGen.using()
-
-  val schema = fn(Seed(AnArray, 2)).sample.get
-
-  pprint.pprintln(schema)
-  pprint.pprintln("###########################")
-  val datas = Gen.resize(5, Gen.nonEmptyListOf(dataFn(schema)))
-  pprint.pprintln(datas.sample.get)
 }

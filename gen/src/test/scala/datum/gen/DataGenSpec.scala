@@ -23,11 +23,11 @@ class DataGenSpec extends WordSpec with Checkers with Matchers {
     "no" -> schemas.value(IntType)
   )
 
-  val generator = DataGen.using()
+  val generator = DataGen.define()
 
   val testGen = generator(test)
 
-  val correspondsTo = Corresponds.using(Corresponds.optional(Corresponds.algebra))
+  val correspondsTo = Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
   val correspondsTest: Data => Boolean = correspondsTo(test)
 
@@ -45,7 +45,7 @@ class DataGenSpec extends WordSpec with Checkers with Matchers {
 
     "generate optional values" in {
       val schema = schemas.array()(schemas.value(IntType, Optional.key -> true))
-      val dataOf = DataGen.using(DataGen.optional(DataGen.algebra))
+      val dataOf = DataGen.define(DataGen.optional(DataGen.algebra))
       val testFn = correspondsTo(schema)
 
       val sample = data.row(data.integer(1), data.empty, data.integer(2))

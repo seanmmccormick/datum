@@ -43,17 +43,17 @@ object DataGen {
         data.date(zdt.toLocalDate)
       }
 
-    case ValueF(InstantType, _) =>
+    case ValueF(TimestampType, _) =>
       arbitrary[ZonedDateTime].map { zdt =>
         data.instant(zdt.toInstant)
       }
 
-    case ValueF(LocalTimeType, _) =>
+    case ValueF(DateTimeType, _) =>
       arbitrary[ZonedDateTime].map { zdt =>
         data.localTime(zdt.toLocalDateTime)
       }
 
-    case ValueF(ZonedTimeType, _) => arbitrary[ZonedDateTime].map(data.zonedTime)
+    case ValueF(ZonedDateTimeType, _) => arbitrary[ZonedDateTime].map(data.zonedTime)
 
     case ArrayF(element, _) =>
       Gen.resize(5, Gen.containerOf[Vector, Data](element).map(data.row))
@@ -75,7 +75,7 @@ object DataGen {
     }
   }
 
-  def using(alg: Algebra[SchemaF, Gen[Data]] = algebra): Schema => Gen[Data] = {
+  def define(alg: Algebra[SchemaF, Gen[Data]] = algebra): Schema => Gen[Data] = {
     val fn = scheme.cata(alg)
     val result: Schema => Gen[Data] = { s =>
       fn(s)
