@@ -5,7 +5,7 @@ import datum.patterns.data._
 import datum.patterns.schemas._
 import qq.droste.data.Fix
 import qq.droste.{Algebra, scheme}
-
+import qq.droste.syntax.project._
 object Corresponds {
 
   private def matchValue(fn: PartialFunction[DataF[Fix[DataF]], Boolean])(value: Data): Boolean =
@@ -14,7 +14,7 @@ object Corresponds {
   val algebra: Algebra[SchemaF, Data => Boolean] = Algebra {
 
     case ObjF(schemaFields, _) =>
-      Fix.un[DataF](_) match {
+      _.project match {
         case ObjValue(valueFields) =>
           schemaFields.forall {
             case (key, checkFn) if valueFields.contains(key) =>
@@ -27,7 +27,7 @@ object Corresponds {
       }
 
     case RowF(schemaColumns, _) =>
-      Fix.un[DataF](_) match {
+      _.project match {
         case RowValue(values) if schemaColumns.length == values.length =>
           schemaColumns.zip(values).forall {
             case (column, data) =>
@@ -42,7 +42,7 @@ object Corresponds {
         alternatives.exists(pred => pred(d))
 
     case ArrayF(fn, _) =>
-      Fix.un[DataF](_) match {
+      _.project match {
         case RowValue(values) => values.forall(fn)
         case _ => false
       }

@@ -10,19 +10,16 @@ import scala.collection.immutable.SortedMap
 
 class SchemaGen(
   allowedValueTypes: Vector[Type] = SchemaGen.types.all,
-  allowedNestedTypes: Vector[(Int, SchemaGen.Next)] = SchemaGen.nest.default,
+  next: Gen[SchemaGen.Next] = SchemaGen.next.default,
   objMaxNumFields: Int = 5,
   rowMaxNumColumns: Int = 5
 ) {
   import SchemaGen._
 
-  private val genAllowedNested =
-    Gen.frequency(allowedNestedTypes.map { case (freq, next) => (freq, Gen.const(next)) }: _*)
-
   private def nest(level: Int): Gen[Seed] = {
     for {
       n <- {
-        if (level > 0) genAllowedNested
+        if (level > 0) next
         else Gen.const(AValue)
       }
       l <- if (level > 1) Gen.chooseNum(0, level - 1) else Gen.const(0)
@@ -94,27 +91,33 @@ object SchemaGen {
     )
   }
 
-  object nest {
+  object next {
 
-    val default: Vector[(Int, Next)] = Vector(
-      4 -> AValue,
-      1 -> AnObj,
-      1 -> ATable,
-      1 -> AUnion,
-      1 -> AnArray
+    val default: Gen[Next] = Gen.frequency(
+      4 -> Gen.const(AValue),
+      1 -> Gen.const(AnObj),
+      1 -> Gen.const(ATable),
+      1 -> Gen.const(AUnion),
+      1 -> Gen.const(AnArray)
     )
   }
 
-  sealed trait Next
-  case object AValue extends Next
-  case object AnObj extends Next
-  case object ATable extends Next
-  case object AUnion extends Next
-  case object AnArray extends Next
+  sealed trait Next extends Serializable with Product
+  final case object AValue extends Next
+  final case object AnObj extends Next
+  final case object ATable extends Next
+  final case object AUnion extends Next
+  final case object AnArray extends Next
 
   case class Seed(next: Next, level: Int)
 
   val default = new SchemaGen()
+
+  val simple =
+    new SchemaGen(
+      allowedValueTypes = Vector(IntType, BooleanType, TextType),
+      next = Gen.const(AValue)
+    )
 
   def optional(alg: CoalgebraM[Gen, SchemaF, Seed]): CoalgebraM[Gen, SchemaF, Seed] = CoalgebraM { seed =>
     alg(seed).flatMap(schema => Gen.oneOf(schema, schema.withAttributes(Optional.key -> true)))
@@ -127,4 +130,19 @@ object SchemaGen {
     }
     result
   }
+}
+
+object TestIt extends App {
+  import SchemaGen._
+
+  val fn = SchemaGen.using(SchemaGen.optional(simple.coalgebra))
+
+  val dataFn = DataGen.using()
+
+  val schema = fn(Seed(AnArray, 2)).sample.get
+
+  pprint.pprintln(schema)
+  pprint.pprintln("###########################")
+  val datas = Gen.resize(5, Gen.nonEmptyListOf(dataFn(schema)))
+  pprint.pprintln(datas.sample.get)
 }

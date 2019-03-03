@@ -4,15 +4,15 @@ import datum.gen.algebras.DataGen
 import datum.patterns.attributes._
 import datum.modifiers.Optional
 import datum.patterns.data.Data
-import datum.patterns.schemas
+import datum.patterns.{data, schemas}
 import datum.patterns.schemas.{IntType, Schema, TextType}
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.WordSpec
+import org.scalacheck.Arbitrary
+import org.scalatest.{Matchers, WordSpec}
 import org.scalacheck.Prop._
 import org.scalatest.prop.Checkers
 
 
-class DataGenProps extends WordSpec with Checkers {
+class DataGenSpec extends WordSpec with Checkers with Matchers {
 
   val test: Schema = schemas.obj()(
     "foo" -> schemas.value(IntType, Optional.key -> true),
@@ -23,17 +23,9 @@ class DataGenProps extends WordSpec with Checkers {
     "no" -> schemas.value(IntType)
   )
 
-  val generator = DataGen.using() //DataGen.using(DataGen.optional(DataGen.algebra))
+  val generator = DataGen.using()
 
   val testGen = generator(test)
-
-  val genDataFromSchema: Gen[List[Data]] = {
-    for {
-      ds <- Gen.listOf(testGen)
-    } yield ds
-  }
-
-  implicit val arb: Arbitrary[List[Data]] = Arbitrary(genDataFromSchema)
 
   val correspondsTo = Corresponds.using(Corresponds.optional(Corresponds.algebra))
 
@@ -43,9 +35,27 @@ class DataGenProps extends WordSpec with Checkers {
 
   "Generated Data" should {
     "correspond to a particular schema" in {
+      implicit val arb: Arbitrary[Data] = Arbitrary(testGen)
       check {
-        forAll { data: List[Data] =>
-          data.forall(correspondsTest) && !data.exists(correspondsOther)
+        forAll { data: Data =>
+          correspondsTest(data) && !correspondsOther(data)
+        }
+      }
+    }
+
+    "generate optional values" in {
+      val schema = schemas.array()(schemas.value(IntType, Optional.key -> true))
+      val dataOf = DataGen.using(DataGen.optional(DataGen.algebra))
+      val testFn = correspondsTo(schema)
+
+      val sample = data.row(data.integer(1), data.empty, data.integer(2))
+      testFn(sample) shouldBe true
+
+      implicit val arb: Arbitrary[Data] = Arbitrary(dataOf(schema))
+
+      check {
+        forAll { data: Data =>
+          testFn(data)
         }
       }
     }

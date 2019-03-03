@@ -8,16 +8,36 @@ import scala.collection.immutable.SortedMap
 package object schemas {
   type Schema = Fix[SchemaF]
 
-  def obj(attributes: AttributeMap= Map.empty)(fields: (String, Schema)*): Schema = {
+  def obj(attributes: AttributeMap = Map.empty)(fields: (String, Schema)*): Schema = {
     Fix(ObjF(SortedMap(fields: _*), attributes))
+  }
+
+  def obj(attributes: (String, Attribute)*)(fields: (String, Schema)*): Schema = {
+    Fix(ObjF(SortedMap(fields: _*),  Map(attributes: _*)))
   }
 
   def row(attributes: AttributeMap = Map.empty)(elements: Column[Schema]*): Schema = {
     Fix(RowF(Vector(elements: _*), attributes))
   }
 
+  def row(attributes: (String, Attribute)*)(elements: Column[Schema]*): Schema = {
+    Fix(RowF(Vector(elements: _*), Map(attributes: _*)))
+  }
+
   def union(attributes: AttributeMap = Map.empty)(alternatives: Schema*): Schema = {
     Fix(UnionF(Vector(alternatives: _*), attributes))
+  }
+
+  def union(attributes: (String, Attribute)*)(alternatives: Schema*): Schema = {
+    Fix(UnionF(Vector(alternatives: _*),  Map(attributes: _*)))
+  }
+
+  def array(attributes: AttributeMap = Map.empty)(conforms: Schema): Schema = {
+    Fix(ArrayF(conforms, attributes))
+  }
+
+  def array(attributes: (String, Attribute)*)(conforms: Schema): Schema = {
+    Fix(ArrayF(conforms, Map(attributes: _*)))
   }
 
   def value(
