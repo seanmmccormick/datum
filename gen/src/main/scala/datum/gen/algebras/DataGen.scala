@@ -44,8 +44,8 @@ object DataGen {
       }
 
     case ValueF(TimestampType, _) =>
-      arbitrary[ZonedDateTime].map { zdt =>
-        data.instant(zdt.toInstant)
+      Gen.chooseNum(Integer.MAX_VALUE / 8, Integer.MAX_VALUE).map { x =>
+        data.instant(java.time.Instant.ofEpochSecond(x))
       }
 
     case ValueF(DateTimeType, _) =>
@@ -76,10 +76,6 @@ object DataGen {
   }
 
   def define(alg: Algebra[SchemaF, Gen[Data]] = algebra): Schema => Gen[Data] = {
-    val fn = scheme.cata(alg)
-    val result: Schema => Gen[Data] = { s =>
-      fn(s)
-    }
-    result
+    scheme.cata(alg)
   }
 }

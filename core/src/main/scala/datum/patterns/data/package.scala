@@ -58,7 +58,7 @@ package object data {
   }
 
   def instant(value: Instant): Data = {
-    Fix[DataF](InstantValue(value))
+    Fix[DataF](TimestampValue(value))
   }
 
   def localTime(value: LocalDateTime): Data = {

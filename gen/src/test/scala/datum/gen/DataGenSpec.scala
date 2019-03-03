@@ -1,7 +1,6 @@
 package datum.gen
 import datum.algebras.Corresponds
 import datum.gen.algebras.DataGen
-import datum.patterns.attributes._
 import datum.modifiers.Optional
 import datum.patterns.data.Data
 import datum.patterns.{data, schemas}
@@ -15,7 +14,7 @@ import org.scalatest.prop.Checkers
 class DataGenSpec extends WordSpec with Checkers with Matchers {
 
   val test: Schema = schemas.obj()(
-    "foo" -> schemas.value(IntType, Optional.key -> true),
+    "foo" -> schemas.value(IntType, Optional.enable),
     "bar" -> schemas.value(TextType)
   )
 
@@ -44,7 +43,7 @@ class DataGenSpec extends WordSpec with Checkers with Matchers {
     }
 
     "generate optional values" in {
-      val schema = schemas.array()(schemas.value(IntType, Optional.key -> true))
+      val schema = schemas.array()(schemas.value(IntType, Optional.enable))
       val dataOf = DataGen.define(DataGen.optional(DataGen.algebra))
       val testFn = correspondsTo(schema)
 

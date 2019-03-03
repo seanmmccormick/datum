@@ -40,7 +40,7 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
 
     case UnionF(alternatives, attributes) =>
       Js.Obj(
-        "union" -> Js.Arr(alternatives),
+        "union" -> alternatives,
         "attributes" -> writeJs(attributes)
       )
 
@@ -75,6 +75,11 @@ trait SchemaReadWriter { self: AttributeReadWriter =>
     case Js.Obj(fields) if fields.contains("fields") =>
       val attrs = readJs[Map[String, Attribute]](fields("attributes"))
       ObjF(SortedMap(fields("fields").obj.toSeq: _*), attrs)
+
+    case fuuu =>
+      println("============ FUUUUUUU =========")
+      pprint.pprintln(fuuu)
+      ???
   }
 
   implicit val scheamReadWrite: ReadWriter[Schema] = upickle.default
