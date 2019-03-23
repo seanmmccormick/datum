@@ -1,6 +1,5 @@
 package datum.gen.algebras
 import datum.modifiers.Optional
-import datum.patterns.attributes._
 import datum.patterns.schemas._
 import org.scalacheck.Gen
 import org.scalacheck.cats.implicits._
@@ -34,7 +33,7 @@ class SchemaGen(
       s <- nest(level)
     } yield (k, s)
 
-    Gen.resize(maxFields, Gen.listOf(genField).map { fields =>
+    Gen.resize(maxFields, Gen.nonEmptyListOf(genField).map { fields =>
       ObjF[Seed](SortedMap(fields: _*))
     })
   }
@@ -50,10 +49,23 @@ class SchemaGen(
     })
   }
 
+  /*
+   * Union may not contain another union
+   * Union may not contain an array
+   */
   private def genUnion(level: Int): Gen[SchemaF[Seed]] = {
-    Gen.resize(3, Gen.nonEmptyContainerOf[Vector, Seed](nest(level)).map { alts =>
-      UnionF[Seed](alts)
-    })
+    Gen.resize(
+      3,
+      Gen.nonEmptyContainerOf[Vector, Seed](nest(level)).map { alts =>
+        val valid = alts.map {
+          case Seed(AUnion, l)  => Seed(AValue, l)
+          case Seed(AnArray, l) => Seed(AValue, l)
+          case Seed(n, l)       => Seed(n, l)
+        }
+
+        UnionF[Seed](valid)
+      }
+    )
   }
 
   private def genArray(level: Int): Gen[SchemaF[Seed]] = {
@@ -82,11 +94,11 @@ object SchemaGen {
       DoubleType,
       FloatType,
       TextType,
-      BytesType,
+      //  BytesType, - Using == to compare byte arrays seems to be wonky
       BooleanType,
       DateType,
-      DateTimeType,
-      ZonedDateTimeType
+      DateTimeType
+      // ZonedDateTimeType - the gen for zonetime is buggy! can generate invalid strings :/
     )
   }
 

@@ -29,6 +29,14 @@ object DataGen {
     case err => throw new Exception(s"Impossible: ${pprint.apply(err)}")
   }
 
+  private val unixtime = Gen.chooseNum(Integer.MAX_VALUE / 8, Integer.MAX_VALUE).map { ts =>
+    java.time.Instant.ofEpochSecond(ts)
+  }
+
+  import scala.collection.JavaConverters._
+  private val allzones = java.time.ZoneId.getAvailableZoneIds.asScala.toVector.map(java.time.ZoneId.of)
+  private val zones = Gen.oneOf(allzones)
+
   val algebra: Algebra[SchemaF, Gen[Data]] = Algebra {
     case ValueF(IntType, _)     => arbitrary[Int].map(data.integer)
     case ValueF(LongType, _)    => arbitrary[Long].map(data.long)
@@ -39,21 +47,33 @@ object DataGen {
     case ValueF(BytesType, _)   => arbitrary[Array[Byte]].map(data.bytes)
 
     case ValueF(DateType, _) =>
-      arbitrary[ZonedDateTime].map { zdt =>
-        data.date(zdt.toLocalDate)
+      for {
+        ts <- unixtime
+        z <- zones
+      } yield {
+        data.date(ts.atZone(z).toLocalDate)
       }
 
     case ValueF(TimestampType, _) =>
-      Gen.chooseNum(Integer.MAX_VALUE / 8, Integer.MAX_VALUE).map { x =>
-        data.timestamp(java.time.Instant.ofEpochSecond(x))
+      unixtime.map { ts =>
+        data.timestamp(ts)
       }
 
     case ValueF(DateTimeType, _) =>
-      arbitrary[ZonedDateTime].map { zdt =>
-        data.localTime(zdt.toLocalDateTime)
+      for {
+        ts <- unixtime
+        z <- zones
+      } yield {
+        data.localTime(ts.atZone(z).toLocalDateTime)
       }
 
-    case ValueF(ZonedDateTimeType, _) => arbitrary[ZonedDateTime].map(data.zonedTime)
+    case ValueF(ZonedDateTimeType, _) =>
+      for {
+        ts <- unixtime
+        z <- zones
+      } yield {
+        data.zonedTime(ts.atZone(z))
+      }
 
     case ArrayF(element, _) =>
       Gen.resize(5, Gen.containerOf[Vector, Data](element).map(data.row))

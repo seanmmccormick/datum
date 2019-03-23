@@ -17,12 +17,12 @@ object WriteJs {
 
   private def toJs(tpe: schemas.Type, d: DataF[Data]): Js.Value = {
     (tpe, d) match {
-      case (IntType, data.IntValue(v))             => Js.Num(v)
-      case (LongType, data.LongValue(v))           => Js.Str(v.toString)
-      case (FloatType, data.FloatValue(v))         => Js.Num(v)
-      case (DoubleType, data.DoubleValue(v))       => Js.Num(v)
-      case (TextType, data.TextValue(v))           => Js.Str(v)
-      case (BooleanType, data.BooleanValue(v))     => Js.Bool(v)
+      case (IntType, data.IntValue(v))         => Js.Num(v)
+      case (LongType, data.LongValue(v))       => Js.Str(v.toString)
+      case (FloatType, data.FloatValue(v))     => Js.Num(v)
+      case (DoubleType, data.DoubleValue(v))   => Js.Num(v)
+      case (TextType, data.TextValue(v))       => Js.Str(v)
+      case (BooleanType, data.BooleanValue(v)) => Js.Bool(v)
       case (BytesType, data.BytesValue(v)) =>
         val encoded = Base64.getEncoder.encodeToString(v)
         Js.Str(encoded)
@@ -46,19 +46,23 @@ object WriteJs {
     case ObjF(schema, _) =>
       _.project match {
         case data.ObjValue(fields) =>
-          val jsFields = mutable.LinkedHashMap.empty[String, Js.Value]
           val has = fields.keySet.intersect(schema.keySet)
           val missing = schema.keySet.diff(fields.keySet)
+          val invalid = fields.keySet.diff(schema.keySet)
 
-          has.foreach { k =>
-            jsFields.put(k, schema(k)(fields(k)))
+          if (invalid.nonEmpty) Js.Null
+          else {
+            val jsFields = mutable.LinkedHashMap.empty[String, Js.Value]
+            has.foreach { k =>
+              jsFields.put(k, schema(k)(fields(k)))
+            }
+
+            missing.foreach { k =>
+              jsFields.put(k, schema(k)(data.empty))
+            }
+
+            Js.Obj(jsFields)
           }
-
-          missing.foreach { k =>
-            jsFields.put(k, schema(k)(data.empty))
-          }
-
-          Js.Obj(jsFields)
 
         case _ => Js.Null
       }
@@ -66,18 +70,25 @@ object WriteJs {
     case RowF(elements, _) =>
       _.project match {
         case data.RowValue(rows) =>
+          var nulls = 0
           val empty = Stream.continually(data.empty)
-          elements.zip(rows.toStream #::: empty).map {
-            case (col, d) => col.value.apply(d)
+          val result = elements.zip(rows.toStream #::: empty).map {
+            case (col, d) =>
+              val r = col.value.apply(d)
+              if (r == Js.Null) nulls += 1
+              r
           }
+          if (nulls != elements.length || rows.isEmpty) result else Js.Null
 
         case _ => Js.Null
       }
 
     case ArrayF(fn, _) =>
       _.project match {
-        case data.RowValue(values) => values.map(fn)
-        case _                     => Js.Null
+        case data.RowValue(values) =>
+          val result = values.map(fn)
+          if (result.exists(_ != Js.Null) || result.isEmpty) result else Js.Null
+        case _ => Js.Null
       }
 
     case UnionF(options, _) =>
@@ -87,6 +98,8 @@ object WriteJs {
         var idx = -1
         while (iter.hasNext && result == Js.Null) {
           val fn = iter.next()
+          println(s"Attempting to use $d")
+          println(s"Was ${fn(d)}")
           result = fn(d)
           idx += 1
         }
