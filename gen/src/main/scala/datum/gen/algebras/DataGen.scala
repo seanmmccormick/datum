@@ -45,7 +45,7 @@ object DataGen {
 
     case ValueF(TimestampType, _) =>
       Gen.chooseNum(Integer.MAX_VALUE / 8, Integer.MAX_VALUE).map { x =>
-        data.instant(java.time.Instant.ofEpochSecond(x))
+        data.timestamp(java.time.Instant.ofEpochSecond(x))
       }
 
     case ValueF(DateTimeType, _) =>

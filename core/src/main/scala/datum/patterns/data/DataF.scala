@@ -24,7 +24,7 @@ final case class BooleanValue(value: Boolean) extends DataF[Nothing]
 final case class BytesValue(value: Array[Byte]) extends DataF[Nothing]
 final case class DateValue(value: LocalDate) extends DataF[Nothing]
 final case class TimestampValue(value: Instant) extends DataF[Nothing]
-final case class LocalTimeValue(value: LocalDateTime) extends DataF[Nothing]
+final case class DateTimeValue(value: LocalDateTime) extends DataF[Nothing]
 final case class ZonedTimeValue(value: ZonedDateTime) extends DataF[Nothing]
 case object EmptyValue extends DataF[Nothing]
 
@@ -50,7 +50,7 @@ object DataF {
         case v @ BytesValue(_)     => G.pure(v)
         case v @ DateValue(_)      => G.pure(v)
         case v @ TimestampValue(_) => G.pure(v)
-        case v @ LocalTimeValue(_) => G.pure(v)
+        case v @ DateTimeValue(_) => G.pure(v)
         case v @ ZonedTimeValue(_) => G.pure(v)
       }
     }

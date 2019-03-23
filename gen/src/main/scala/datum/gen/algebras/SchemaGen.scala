@@ -11,8 +11,7 @@ import scala.collection.immutable.SortedMap
 class SchemaGen(
   allowedValueTypes: Vector[Type] = SchemaGen.types.all,
   next: Gen[SchemaGen.Next] = SchemaGen.next.default,
-  objMaxNumFields: Int = 5,
-  rowMaxNumColumns: Int = 5
+  maxFields: Int = 5,
 ) {
   import SchemaGen._
 
@@ -35,7 +34,7 @@ class SchemaGen(
       s <- nest(level)
     } yield (k, s)
 
-    Gen.resize(objMaxNumFields, Gen.listOf(genField).map { fields =>
+    Gen.resize(maxFields, Gen.listOf(genField).map { fields =>
       ObjF[Seed](SortedMap(fields: _*))
     })
   }
@@ -46,7 +45,7 @@ class SchemaGen(
       s <- nest(level)
     } yield Column(s, k)
 
-    Gen.resize(rowMaxNumColumns, Gen.nonEmptyContainerOf[Vector, Column[Seed]](col).map { elements =>
+    Gen.resize(maxFields, Gen.nonEmptyContainerOf[Vector, Column[Seed]](col).map { elements =>
       RowF[Seed](elements)
     })
   }

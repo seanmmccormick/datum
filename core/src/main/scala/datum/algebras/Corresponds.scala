@@ -56,7 +56,7 @@ object Corresponds {
     case ValueF(BooleanType, _)       => matchValue { case BooleanValue(_)   => true }
     case ValueF(DateType, _)          => matchValue { case DateValue(_)      => true }
     case ValueF(TimestampType, _)     => matchValue { case TimestampValue(_)   => true }
-    case ValueF(DateTimeType, _)      => matchValue { case LocalTimeValue(_) => true }
+    case ValueF(DateTimeType, _)      => matchValue { case DateTimeValue(_) => true }
     case ValueF(ZonedDateTimeType, _) => matchValue { case ZonedTimeValue(_) => true }
     case ValueF(BytesType, _)         => matchValue { case BytesValue(_)     => true }
 

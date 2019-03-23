@@ -57,12 +57,12 @@ package object data {
     Fix[DataF](DateValue(value))
   }
 
-  def instant(value: Instant): Data = {
+  def timestamp(value: Instant): Data = {
     Fix[DataF](TimestampValue(value))
   }
 
   def localTime(value: LocalDateTime): Data = {
-    Fix[DataF](LocalTimeValue(value))
+    Fix[DataF](DateTimeValue(value))
   }
 
   def zonedTime(value: ZonedDateTime): Data = {

@@ -13,7 +13,7 @@ import org.scalatest.prop.Checkers
 
 class UjsonLibSpec extends WordSpec with Checkers with Matchers {
 
-  private val aSeed = Gen.oneOf(SchemaGen.AnObj, SchemaGen.AnObj).map(Seed(_, 5))
+  private val aSeed = Gen.oneOf(SchemaGen.AUnion, SchemaGen.AnObj, SchemaGen.ATable).map(Seed(_, 5))
 
   private val generateUsing = DataGen.define()
   implicit def arbData(implicit schema: Schema): Arbitrary[Data] = Arbitrary {
@@ -48,15 +48,12 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
     }
 
     "be able to encode/decode arbitrary data of some schema" in {
+      val generator = SchemaGen.simple
 
-      val test =     new SchemaGen(
-        allowedValueTypes = Vector(IntType, BooleanType, TextType, TimestampType),
-        next = Gen.const(AValue)
-      )
-      implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary  {
+      implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary {
         for {
           seed <- aSeed
-          schema <- SchemaGen.define(test.coalgebra)(seed)
+          schema <- SchemaGen.define(generator.coalgebra)(seed)
           data <- Gen.nonEmptyListOf(DataGen.define()(schema))
         } yield (schema, data)
       }
@@ -64,13 +61,21 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       check {
         forAll { generated: (Schema, List[Data]) =>
           val (schema, data) = generated
-          //pprint.pprintln(data.head)
-          val fn = WriteJs.define()(schema)
-          val js = fn(data.head)
-          println("#################")
-          pprint.pprintln(schema)
-          pprint.pprintln(js.render(2))
-          true
+          val writer = WriteJs.define()(schema)
+          val reader = ReadJs.define()(schema)
+          //data.map(d => reader(writer(d))) == data.map(Right.apply)
+          data.map(d => reader(writer(d))).zip(data).collect {
+            case (Left(x), q) =>
+              pprint.pprintln(s"Failed: ${x}")
+              pprint.pprintln("==== DATA ====")
+              pprint.pprintln(q)
+              pprint.pprintln("==== SCHEMA ====")
+              pprint.pprintln(schema)
+              ()
+          }
+
+          data.map(d => reader(writer(d))).forall(_.isRight) && true
+
         }
       }
     }
