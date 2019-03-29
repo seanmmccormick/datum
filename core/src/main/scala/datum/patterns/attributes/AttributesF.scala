@@ -22,7 +22,7 @@ object AttributesF {
         case v @ BoolProperty(_) => G.pure(v)
         case v @ NumProperty(_)  => G.pure(v)
         case v @ Property(_)     => G.pure(v)
-        case v @ Flag            => G.pure(v)
+        case Flag                => G.pure(Flag)
         case Label(n, a) =>
           G.map(f(a)) { b =>
             Label(n, b)
