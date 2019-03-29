@@ -12,9 +12,8 @@ object AttributeReadWriter {
     case NumProperty(value)  => Js.Num(value)
     case BoolProperty(value) => Js.Bool(value)
     case Label(name, value)  => Js.Obj("attr" -> "label", name -> value)
-    case And(lhs, rhs)       => Js.Obj("attr" -> "and", "left" -> lhs, "right" -> rhs)
-    case Or(lhs, rhs)        => Js.Obj("attr" -> "or", "left" -> lhs, "right" -> rhs)
     case Collection(vs)      => Js.Arr(vs)
+    case Flag                => Js.Obj()
   }
 
   val coalgebra: Coalgebra[AttributesF, Js.Value] = Coalgebra[AttributesF, Js.Value] {
@@ -30,9 +29,7 @@ object AttributeReadWriter {
       val (name, value) = fields.filterKeys(_ != "attr").head
       Label(name, value)
 
-    case Js.Obj(fields) if fields("attr").str == "and" => And(fields("left"), fields("right"))
-
-    case Js.Obj(fields) if fields("attr").str == "or" => Or(fields("left"), fields("right"))
+    case Js.Obj(fields) if fields.isEmpty => Flag
   }
 }
 

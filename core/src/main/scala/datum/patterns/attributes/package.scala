@@ -1,22 +1,22 @@
 package datum.patterns
 
 import qq.droste.data.Fix
+import qq.droste.syntax.fix._
 
 package object attributes {
   type Attribute = Fix[AttributesF]
   type AttributeMap = Map[String, Attribute]
 
-  def property(flag: Boolean): Attribute = Fix.apply[AttributesF](BoolProperty(flag))
+  val flag: Attribute = Flag.fix
 
-  def property(text: String): Attribute = Fix.apply[AttributesF](Property(text))
+  def property(bool: Boolean): Attribute = BoolProperty(bool).fix
 
-  def property(value: Double): Attribute = Fix.apply[AttributesF](NumProperty(value))
+  def property(text: String): Attribute = Property(text).fix
 
-  def and(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](And(left, right))
+  def property(value: Double): Attribute = NumProperty(value).fix
 
-  def or(left: Attribute, right: Attribute): Attribute = Fix.apply[AttributesF](Or(left, right))
+  def label(name: String, attr: Attribute): Attribute = Label(name, attr).fix[AttributesF]
 
-  def label(name: String, attr: Attribute): Attribute = Fix.apply[AttributesF](Label(name, attr))
+  def collection(values: Attribute*): Attribute = Collection(values.toVector).fix[AttributesF]
 
-  def collection(values: Attribute*): Attribute = Fix.apply[AttributesF](Collection(values.toVector))
 }
