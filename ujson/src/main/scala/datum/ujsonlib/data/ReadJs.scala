@@ -89,7 +89,7 @@ object ReadJs {
 
     case RowF(elements, _) => {
       case Js.Arr(values) =>
-        val valuesThenNulls = elements.zip(values.toStream #::: Stream.continually(Js.Null))
+        val valuesThenNulls = elements.zip(values.toStream #::: Stream.continually[ujson.Js](Js.Null))
         val results = Traverse[Vector].traverse(valuesThenNulls) {
           case (col, v) =>
             col.value.apply(v)

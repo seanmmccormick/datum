@@ -10,7 +10,7 @@ import scala.collection.immutable.SortedMap
 class SchemaGen(
   allowedValueTypes: Vector[Type] = SchemaGen.types.all,
   next: Gen[SchemaGen.Next] = SchemaGen.next.default,
-  maxFields: Int = 5,
+  maxFields: Int = 5
 ) {
   import SchemaGen._
 

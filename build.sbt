@@ -1,11 +1,15 @@
 // Versions
 val catsV = "1.4.0"
-val drosteV = "0.5.0"
+val drosteV = "0.6.0"
+
+lazy val scala212 = "2.12.8"
+lazy val scala211 = "2.11.12"
+lazy val supportedScalaVersions = List(scala212, scala211)
 
 // Settings
 lazy val commonSettings = Seq(
   name := "datum",
-  scalaVersion := "2.12.6",
+  crossScalaVersions := supportedScalaVersions,
   organization := "com.voltir",
   resolvers += Resolver.sonatypeRepo("releases"),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
