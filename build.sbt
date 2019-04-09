@@ -10,7 +10,7 @@ lazy val supportedScalaVersions = List(scala212, scala211)
 lazy val commonSettings = Seq(
   name := "datum",
   crossScalaVersions := supportedScalaVersions,
-  organization := "com.voltir",
+  organization := "io.github.voltir",
   resolvers += Resolver.sonatypeRepo("releases"),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
   scalacOptions ++= Seq(
@@ -33,6 +33,10 @@ lazy val commonSettings = Seq(
 
 // Modules
 lazy val datum = (project in file("."))
+  .settings(
+    skip in publish := true,
+    sonatypeProfileName := "io.github.voltir"
+  )
   .aggregate(core, gen, testCore, ujson)
 
 lazy val core = (project in file("core"))
@@ -40,6 +44,7 @@ lazy val core = (project in file("core"))
   .settings(
     name := "datum-core",
   )
+  .settings(sonatypePublish)
 
 lazy val gen = (project in file("gen"))
   .settings(commonSettings)
@@ -51,6 +56,7 @@ lazy val gen = (project in file("gen"))
       "com.47deg" %% "scalacheck-toolbox-datetime" % "0.2.5"
     )
   )
+  .settings(sonatypePublish)
   .dependsOn(core)
 
 // sub project so that test code can depend on both core and gen
@@ -58,6 +64,7 @@ lazy val gen = (project in file("gen"))
 lazy val testCore = (project in file("test-core"))
   .settings(commonSettings)
   .settings(
+    skip in publish := true,
     name := "datum-core-test"
   )
   .dependsOn(core, gen % Test)
@@ -70,4 +77,37 @@ lazy val ujson = (project in file("ujson"))
       "com.lihaoyi" %% "upickle" % "0.6.6"
     )
   )
+  .settings(sonatypePublish)
   .dependsOn(core, gen % Test)
+
+// Publish Settings
+val sonatypePublish = Seq(
+  //releaseCrossBuild := true,
+  publishMavenStyle := true,
+  publishArtifact.in(Test) := false,
+  pomIncludeRepository := Function.const(false),
+  homepage := Some(url("https://github.com/Voltir/datum")),
+  sonatypeProfileName := "io.github.voltir",
+  licenses += ("MIT license", url(
+    "http://www.opensource.org/licenses/mit-license.php")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/Voltir/datum"),
+      "scm:git:git@github.com:Voltir/datum.git"
+    )),
+  developers := List(
+    Developer(
+      "voltir",
+      "Nick Childers",
+      "voltir42@gmail.com",
+      url("https://github.com/Voltir")
+    )
+  ),
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  }
+)
