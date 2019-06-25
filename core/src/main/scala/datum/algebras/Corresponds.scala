@@ -3,9 +3,8 @@ import datum.modifiers.Optional
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
-import qq.droste.data.Fix
-import qq.droste.{Algebra, scheme}
-import qq.droste.syntax.project._
+import higherkindness.droste.data.Fix
+import higherkindness.droste.{Algebra, scheme}
 
 object Corresponds {
 
@@ -15,7 +14,7 @@ object Corresponds {
   val algebra: Algebra[SchemaF, Data => Boolean] = Algebra {
 
     case ObjF(schemaFields, _) =>
-      _.project match {
+      Fix.un[DataF](_) match {
         case ObjValue(valueFields) =>
           schemaFields.forall {
             case (key, checkFn) if valueFields.contains(key) =>
@@ -28,7 +27,7 @@ object Corresponds {
       }
 
     case RowF(schemaColumns, _) =>
-      _.project match {
+      Fix.un[DataF](_) match {
         case RowValue(values) if schemaColumns.length == values.length =>
           schemaColumns.zip(values).forall {
             case (column, data) =>
@@ -39,21 +38,21 @@ object Corresponds {
       }
 
     case NamedUnionF(alternatives, _) =>
-      _.project match {
+      Fix.un[DataF](_) match {
         case NamedUnionValue(selected, v) =>
           alternatives.get(selected).exists(_.apply(v))
         case _ => false
       }
 
     case IndexedUnionF(alternatives, _) =>
-      _.project match {
+      Fix.un[DataF](_) match {
         case IndexedUnionValue(idx, v) if idx >= 0 && idx < alternatives.length =>
           alternatives(idx)(v)
         case _ => false
       }
 
     case ArrayF(fn, _) =>
-      _.project match {
+      Fix.un[DataF](_) match {
         case RowValue(values) => values.forall(fn)
         case _                => false
       }

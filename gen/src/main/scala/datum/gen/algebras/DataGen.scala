@@ -8,7 +8,7 @@ import datum.modifiers.Optional
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.cats.implicits._
-import qq.droste.{Algebra, AlgebraM, scheme}
+import higherkindness.droste.{Algebra, AlgebraM, scheme}
 
 object DataGen {
 

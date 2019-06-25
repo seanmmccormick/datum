@@ -3,7 +3,7 @@ package datum.patterns.data
 import java.time.{Instant, LocalDate, LocalDateTime, ZonedDateTime}
 
 import cats.{Applicative, Traverse}
-import qq.droste.util.DefaultTraverse
+import higherkindness.droste.util.DefaultTraverse
 import cats.instances.sortedMap._
 import cats.instances.vector._
 import cats.instances.string._

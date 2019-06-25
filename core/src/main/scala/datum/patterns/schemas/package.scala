@@ -1,7 +1,7 @@
 package datum.patterns
 
 import datum.patterns.attributes.{Attribute, AttributeMap}
-import qq.droste.data.Fix
+import higherkindness.droste.data.Fix
 
 import scala.collection.immutable.SortedMap
 

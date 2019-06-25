@@ -1,7 +1,7 @@
 package datum.patterns
 
-import qq.droste.data.Fix
-import qq.droste.syntax.fix._
+import higherkindness.droste.data.Fix
+import higherkindness.droste.syntax.fix._
 
 package object attributes {
   type Attribute = Fix[AttributesF]

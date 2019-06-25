@@ -3,7 +3,7 @@ package datum.patterns.attributes
 import cats.{Applicative, Traverse}
 import cats.instances.vector._
 
-import qq.droste.util.DefaultTraverse
+import higherkindness.droste.util.DefaultTraverse
 
 sealed trait AttributesF[+R] extends Product with Serializable
 

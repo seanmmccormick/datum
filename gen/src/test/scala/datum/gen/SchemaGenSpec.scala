@@ -6,12 +6,12 @@ import datum.gen.algebras.SchemaGen._
 import datum.modifiers.Optional
 import datum.patterns.{data, schemas}
 import datum.patterns.attributes._
-import datum.patterns.schemas.{BooleanType, IntType, Schema}
+import datum.patterns.schemas.{BooleanType, IntType, Schema, SchemaF}
+import higherkindness.droste.data.Fix
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalacheck.Prop._
 import org.scalatestplus.scalacheck.Checkers
-import qq.droste.syntax.all._
 
 class SchemaGenSpec extends WordSpec with Checkers with Matchers {
 
@@ -28,7 +28,8 @@ class SchemaGenSpec extends WordSpec with Checkers with Matchers {
       check {
         forAll { schema: Schema =>
           val testFn = correspondsTo(schema)
-          val isOpt = schema.project.attributes.contains(Optional.key)
+          // todo: change back to schema.project.attributes if ambiguous implicit issue gets resolved
+          val isOpt = Fix.un[SchemaF](schema).attributes.contains(Optional.key)
           testFn(data.empty) == isOpt
         }
       }

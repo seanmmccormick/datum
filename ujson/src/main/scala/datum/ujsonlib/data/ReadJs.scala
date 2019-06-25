@@ -6,56 +6,55 @@ import cats.Traverse
 import datum.patterns.data._
 import datum.patterns.{schemas, data => d}
 import datum.patterns.schemas._
-import qq.droste.{Algebra, scheme}
+import higherkindness.droste.{Algebra, scheme}
 import cats.syntax.either._
 import cats.instances.either._
 import cats.instances.vector._
 import cats.data.Chain
 import datum.modifiers.Optional
-import ujson.Js
 
 import scala.collection.immutable.SortedMap
 
 object ReadJs {
 
-  private def fromJs(tpe: schemas.Type, js: Js.Value): Either[String, Data] = {
+  private def fromJs(tpe: schemas.Type, js: ujson.Value): Either[String, Data] = {
     (tpe, js) match {
-      case (IntType, Js.Num(v))      => Right(d.integer(v.toInt))
-      case (LongType, Js.Str(v))     => Either.catchNonFatal(d.long(v.toLong)).leftMap(_ => "Invalid Long")
-      case (FloatType, Js.Num(v))    => Right(d.float(v.toFloat))
-      case (DoubleType, Js.Num(v))   => Right(d.double(v))
-      case (TextType, Js.Str(v))     => Right(d.text(v))
-      case (BooleanType, Js.Bool(v)) => Right(d.boolean(v))
+      case (IntType, ujson.Num(v))      => Right(d.integer(v.toInt))
+      case (LongType, ujson.Str(v))     => Either.catchNonFatal(d.long(v.toLong)).leftMap(_ => "Invalid Long")
+      case (FloatType, ujson.Num(v))    => Right(d.float(v.toFloat))
+      case (DoubleType, ujson.Num(v))   => Right(d.double(v))
+      case (TextType, ujson.Str(v))     => Right(d.text(v))
+      case (BooleanType, ujson.Bool(v)) => Right(d.boolean(v))
 
-      case (BytesType, Js.Str(v)) =>
+      case (BytesType, ujson.Str(v)) =>
         Either
           .catchNonFatal {
             d.bytes(Base64.getDecoder.decode(v))
           }
           .leftMap(_ => "Invalid Bytes")
 
-      case (DateType, Js.Str(v)) =>
+      case (DateType, ujson.Str(v)) =>
         Either
           .catchNonFatal {
             d.date(LocalDate.parse(v))
           }
           .leftMap(_ => "Invalid DateType")
 
-      case (TimestampType, Js.Str(v)) =>
+      case (TimestampType, ujson.Str(v)) =>
         Either
           .catchNonFatal {
             d.timestamp(Instant.parse(v))
           }
           .leftMap(_ => "Invalid Timestamp")
 
-      case (DateTimeType, Js.Str(v)) =>
+      case (DateTimeType, ujson.Str(v)) =>
         Either
           .catchNonFatal {
             d.localTime(LocalDateTime.parse(v))
           }
           .leftMap(_ => "Invalid DateTime")
 
-      case (ZonedDateTimeType, Js.Str(v)) =>
+      case (ZonedDateTimeType, ujson.Str(v)) =>
         Either
           .catchNonFatal {
             d.zonedTime(ZonedDateTime.parse(v))
@@ -66,16 +65,16 @@ object ReadJs {
     }
   }
 
-  val algebra: Algebra[SchemaF, Js.Value => Either[String, Data]] = Algebra {
+  val algebra: Algebra[SchemaF, ujson.Value => Either[String, Data]] = Algebra {
     case ValueF(tpe, _) =>
       js =>
         fromJs(tpe, js)
 
     case ObjF(schema, _) => {
-      case Js.Obj(fields) =>
+      case ujson.Obj(fields) =>
         val values = schema.foldLeft(Chain.empty[Either[String, (String, Data)]]) {
           case (acc, (k, fn)) =>
-            acc.prepend(fn(fields.getOrElse(k, Js.Null)).map((k, _)))
+            acc.prepend(fn(fields.getOrElse(k, ujson.Null)).map((k, _)))
         }
         Traverse[Chain].sequence(values).map { collected =>
           val builder = SortedMap.newBuilder[String, Data]
@@ -87,8 +86,8 @@ object ReadJs {
     }
 
     case RowF(elements, _) => {
-      case Js.Arr(values) =>
-        val valuesThenNulls = elements.zip(values.toStream #::: Stream.continually[ujson.Js](Js.Null))
+      case ujson.Arr(values) =>
+        val valuesThenNulls = elements.zip(values.toStream #::: Stream.continually[ujson.Value](ujson.Null))
         val results = Traverse[Vector].traverse(valuesThenNulls) {
           case (col, v) =>
             col.value.apply(v)
@@ -99,14 +98,14 @@ object ReadJs {
     }
 
     case ArrayF(fn, _) => {
-      case Js.Arr(values) =>
+      case ujson.Arr(values) =>
         Traverse[Vector].traverse(values.toVector)(fn).map(d.row)
       case _ =>
         Left("Invalid Array")
     }
 
     case NamedUnionF(alts, _) => {
-      case Js.Obj(fields) =>
+      case ujson.Obj(fields) =>
         val selection = fields.keySet.head
         alts(selection)(fields(selection)).map { res =>
           d.union(selection, res)
@@ -115,7 +114,7 @@ object ReadJs {
     }
 
     case IndexedUnionF(alts, _) => {
-      case Js.Arr(values) if values.length == 2 =>
+      case ujson.Arr(values) if values.length == 2 =>
         try {
           val idx = values(0).num.toInt
           val fn = alts(idx)
@@ -131,8 +130,8 @@ object ReadJs {
   }
 
   def optional(
-    alg: Algebra[SchemaF, Js.Value => Either[String, Data]]
-  ): Algebra[SchemaF, Js.Value => Either[String, Data]] = Algebra { schema => js =>
+    alg: Algebra[SchemaF, ujson.Value => Either[String, Data]]
+  ): Algebra[SchemaF, ujson.Value => Either[String, Data]] = Algebra { schema => js =>
     val fn = alg(schema)
     fn(js) match {
       case Left(_) if schema.attributes.contains(Optional.key) => Right(d.empty)
@@ -141,8 +140,8 @@ object ReadJs {
   }
 
   def define(
-    alg: Algebra[SchemaF, Js.Value => Either[String, Data]] = algebra
-  ): Schema => Js.Value => Either[String, Data] = {
+    alg: Algebra[SchemaF, ujson.Value => Either[String, Data]] = algebra
+  ): Schema => ujson.Value => Either[String, Data] = {
     scheme.cata(alg)
   }
 }

@@ -5,8 +5,8 @@ import datum.patterns.data.Data
 import datum.patterns.schemas._
 
 import cats.syntax.either._
-import qq.droste._
-import qq.droste.data.Attr
+import higherkindness.droste._
+import higherkindness.droste.data.Attr
 import scala.collection.mutable
 
 /*

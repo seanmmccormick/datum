@@ -6,7 +6,7 @@ import datum.patterns.schemas._
 import datum.patterns.attributes._
 import org.scalatest.{Matchers, WordSpec}
 import datum.patterns.data.{Data, DataF, ObjValue, RowValue}
-import qq.droste.data.Fix
+import higherkindness.droste.data.Fix
 
 class DefaultsSpec extends WordSpec with Matchers {
 

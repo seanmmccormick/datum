@@ -5,8 +5,8 @@ import datum.patterns.data
 import datum.patterns.data.{Data, DataF, EmptyValue, RowValue}
 import datum.patterns.schemas.{Column, RowF, SchemaF}
 
-import qq.droste.Algebra
-import qq.droste.data.{AttrF, Fix}
+import higherkindness.droste.Algebra
+import higherkindness.droste.data.{AttrF, Fix}
 
 import scala.collection.mutable
 

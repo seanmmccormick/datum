@@ -5,7 +5,7 @@ import cats.{Applicative, Traverse}
 import cats.instances.sortedMap._
 import cats.instances.string._
 import cats.instances.vector._
-import qq.droste.util.DefaultTraverse
+import higherkindness.droste.util.DefaultTraverse
 
 import scala.collection.immutable.SortedMap
 

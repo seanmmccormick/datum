@@ -6,8 +6,8 @@ import datum.patterns.data
 import datum.patterns.data.Data
 import cats.syntax.either._
 import cats.instances.either._
-import qq.droste.data.Fix
-import qq.droste.AlgebraM
+import higherkindness.droste.data.Fix
+import higherkindness.droste.AlgebraM
 
 trait CompileBoolean {
 
@@ -46,7 +46,7 @@ trait CompiledZonedTime {
     case _ => Left("Invalid Property - expected a text property (in ISO Zoned Date Time Format)")
   }
 
-  private val mkZoned = qq.droste.scheme.cataM(algebra)
+  private val mkZoned = higherkindness.droste.scheme.cataM(algebra)
 
   def zonedTime(attribute: Attribute): Either[String, Data] = mkZoned(attribute)
 }

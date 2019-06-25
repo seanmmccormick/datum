@@ -31,7 +31,7 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       check {
         forAll { schema: Schema =>
           val js = upickle.default.writeJs(schema)
-          val parsed = upickle.default.readJs[Schema](js)
+          val parsed = upickle.default.read[Schema](js)
           parsed == schema
         }
       }

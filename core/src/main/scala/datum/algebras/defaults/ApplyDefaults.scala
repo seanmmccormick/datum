@@ -2,9 +2,9 @@ package datum.algebras.defaults
 import datum.patterns.data
 import datum.patterns.data.{Data, DataF, RowValue}
 import datum.patterns.schemas._
-import qq.droste.data.{AttrF, _}
-import qq.droste.data.prelude._
-import qq.droste.{Algebra, scheme}
+import higherkindness.droste.data.{AttrF, _}
+import higherkindness.droste.data.prelude._
+import higherkindness.droste.{Algebra, scheme}
 
 object ApplyDefaults {
 
@@ -83,4 +83,3 @@ object ApplyDefaults {
     makeFn(annotated)
   }
 }
-

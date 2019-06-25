@@ -1,6 +1,6 @@
 // Versions
 val catsV = "1.6.0"
-val drosteV = "0.6.0"
+val drosteV = "0.7.0"
 
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
@@ -82,7 +82,7 @@ lazy val ujson = (project in file("ujson"))
   .settings(
     name := "datum-ujson",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "0.6.6"
+      "com.lihaoyi" %% "upickle" % "0.7.5"
     )
   )
   .settings(sonatypePublish)

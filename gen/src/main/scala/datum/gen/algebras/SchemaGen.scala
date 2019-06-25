@@ -3,7 +3,7 @@ import datum.modifiers.Optional
 import datum.patterns.schemas._
 import org.scalacheck.Gen
 import org.scalacheck.cats.implicits._
-import qq.droste.{CoalgebraM, scheme}
+import higherkindness.droste.{CoalgebraM, scheme}
 
 import scala.collection.immutable.SortedMap
 

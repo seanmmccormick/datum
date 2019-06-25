@@ -2,7 +2,7 @@ package datum.patterns
 
 import java.time._
 
-import qq.droste.data.Fix
+import higherkindness.droste.data.Fix
 
 import scala.collection.immutable.SortedMap
 
