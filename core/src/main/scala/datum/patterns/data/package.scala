@@ -29,6 +29,10 @@ package object data {
     Fix(RowValue(Vector(elements: _*)))
   }
 
+  def array(elements: Vector[Data]): Data = row(elements)
+
+  def array(elements: Data*): Data = row(elements: _*)
+
   def union(selection: String, element: Data): Data = {
     Fix(NamedUnionValue(selection, element))
   }

@@ -6,7 +6,7 @@ import datum.patterns.data.Data
 import datum.patterns.{attributes, data, schemas}
 import org.scalatest.{Matchers, WordSpec}
 
-class CorrespondsSpec extends WordSpec  with Matchers {
+class CorrespondsSpec extends WordSpec with Matchers {
 
   val correspondsTo = Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
@@ -20,11 +20,10 @@ class CorrespondsSpec extends WordSpec  with Matchers {
   "The correspondence function" should {
 
     "work with optional value" in {
-      val optional = Map(Optional.key -> attributes.property(true))
 
       val opt = schemas.obj()(
         "required" -> schemas.value(IntType),
-        "maybe" -> schemas.value(IntType, optional)
+        "maybe" -> schemas.value(IntType, Optional.enable)
       )
 
       val checkFn = correspondsTo(opt)

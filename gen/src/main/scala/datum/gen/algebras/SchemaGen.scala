@@ -6,11 +6,13 @@ import org.scalacheck.cats.implicits._
 import higherkindness.droste.{CoalgebraM, scheme}
 
 import scala.collection.immutable.SortedMap
+import scala.collection.mutable
 
 class SchemaGen(
   allowedValueTypes: Vector[Type] = SchemaGen.types.all,
   next: Gen[SchemaGen.Next] = SchemaGen.next.default,
-  maxFields: Int = 5
+  maxFields: Int = 5,
+  uniqueColumnNames: Boolean = false
 ) {
   import SchemaGen._
 
@@ -38,15 +40,40 @@ class SchemaGen(
     })
   }
 
-  private def genTable(level: Int): Gen[SchemaF[Seed]] = {
-    val col: Gen[Column[Seed]] = for {
-      k <- Gen.option(Gen.resize(3, Gen.asciiPrintableStr))
-      s <- nest(level)
-    } yield Column(s, k)
+  private def genRow(level: Int): Gen[SchemaF[Seed]] = {
+    val aName = Gen.resize(3, Gen.asciiPrintableStr)
+    val aColumn: Gen[Column[Seed]] = Gen.zip(aName, nest(level)).map { case (s, k) => Column(k, Some(s)) }
 
-    Gen.resize(maxFields, Gen.nonEmptyContainerOf[Vector, Column[Seed]](col).map { elements =>
-      RowF[Seed](elements)
-    })
+    def uniqueColumns(gen: Gen[Column[Seed]]): Gen[Vector[Column[Seed]]] = {
+      val names: mutable.Set[String] = mutable.Set.empty
+      val seen: mutable.Buffer[Column[Seed]] = mutable.Buffer.empty
+
+      val maxDiscarded = 100
+      var discarded = 0
+
+      Gen.sized { size =>
+        if (size == seen.size) seen.toVector
+        else {
+          while (seen.size <= size && discarded < maxDiscarded) gen.sample match {
+            case Some(col @ Column(_, Some(name))) if !names.contains(name) =>
+              seen += col
+              names += name
+            case _ => discarded += 1
+          }
+          seen.toVector
+        }
+      }
+    }
+
+    if (uniqueColumnNames) {
+      Gen.resize(maxFields, uniqueColumns(aColumn)).map { elements =>
+        RowF[Seed](elements)
+      }
+    } else {
+      Gen.resize(maxFields, Gen.nonEmptyContainerOf[Vector, Column[Seed]](aColumn).map { elements =>
+        RowF[Seed](elements)
+      })
+    }
   }
 
   private def genIndexed(level: Int): Gen[SchemaF[Seed]] = {
@@ -78,7 +105,7 @@ class SchemaGen(
   val coalgebra: CoalgebraM[Gen, SchemaF, Seed] = CoalgebraM {
     case Seed(AValue, _)             => genValue
     case Seed(AnObj, level)          => genObj(level)
-    case Seed(ATable, level)         => genTable(level)
+    case Seed(ARow, level)           => genRow(level)
     case Seed(AUnion, level)         => genUnion(level)
     case Seed(AnIndexedUnion, level) => genIndexed(level)
     case Seed(AnArray, level)        => genArray(level)
@@ -109,7 +136,7 @@ object SchemaGen {
     val default: Gen[Next] = Gen.frequency(
       5 -> Gen.const(AValue),
       1 -> Gen.const(AnObj),
-      1 -> Gen.const(ATable),
+      1 -> Gen.const(ARow),
       1 -> Gen.const(AUnion),
       1 -> Gen.const(AnIndexedUnion),
       1 -> Gen.const(AnArray)
@@ -119,7 +146,7 @@ object SchemaGen {
   sealed trait Next extends Serializable with Product
   final case object AValue extends Next
   final case object AnObj extends Next
-  final case object ATable extends Next
+  final case object ARow extends Next
   final case object AUnion extends Next
   final case object AnIndexedUnion extends Next
   final case object AnArray extends Next

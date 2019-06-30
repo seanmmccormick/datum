@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.Checkers
 
 class UjsonLibSpec extends WordSpec with Checkers with Matchers {
 
-  private val aSeed = Gen.oneOf(SchemaGen.AnObj, SchemaGen.ATable, SchemaGen.AUnion).map(Seed(_, 5))
+  private val aSeed = Gen.oneOf(SchemaGen.AnObj, SchemaGen.ARow, SchemaGen.AUnion).map(Seed(_, 5))
 
   private val generateUsing = DataGen.define()
   implicit def arbData(implicit schema: Schema): Arbitrary[Data] = Arbitrary {

@@ -17,13 +17,13 @@ class SchemaGenSpec extends WordSpec with Checkers with Matchers {
 
   val correspondsTo = Corresponds.define(Corresponds.optional(Corresponds.algebra))
 
-  val ASeed: Gen[Seed] = Gen.oneOf(AnObj, AnArray, ATable, AUnion, AnIndexedUnion).map { Seed(_, 5) }
+  val ASeed: Gen[Seed] = Gen.oneOf(AnObj, AnArray, ARow, AUnion, AnIndexedUnion).map { Seed(_, 5) }
 
   "Schema Generation" should {
     "support optional values" in {
+      val fn = SchemaGen.define(SchemaGen.optional(SchemaGen.default.coalgebra))
       implicit val gen: Arbitrary[Schema] = Arbitrary {
-        val fn = SchemaGen.define(SchemaGen.optional(SchemaGen.default.coalgebra))
-        Gen.oneOf(AnObj, AnArray, ATable).flatMap(n => fn(Seed(n, 5)))
+        Gen.oneOf(AnObj, AnArray, ARow).flatMap(n => fn(Seed(n, 5)))
       }
       check {
         forAll { schema: Schema =>
@@ -44,6 +44,27 @@ class SchemaGenSpec extends WordSpec with Checkers with Matchers {
       correspondsTo(requiredUnion)(data.empty) shouldBe false
       correspondsTo(optUnion1)(data.empty) shouldBe true
       correspondsTo(optUnion2)(data.indexed(0, data.empty)) shouldBe true
+    }
+
+    "unique colmns are unique" in {
+      val unique = new SchemaGen(uniqueColumnNames = true, maxFields = 30)
+      val fn = SchemaGen.define(unique.coalgebra)
+
+      // This will generate a non-nested "flat" shape, akin to a simple csv
+      implicit val gen: Arbitrary[Schema] = Arbitrary {
+        fn(Seed(ARow, 0))
+      }
+
+      check {
+        forAll { schema: Schema =>
+          Fix.un[SchemaF](schema) match {
+            case schemas.RowF(cols, _) =>
+              val names = cols.map(_.header.getOrElse(""))
+              names.length == names.distinct.length
+            case _ => false
+          }
+        }
+      }
     }
   }
 }
