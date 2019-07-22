@@ -1,14 +1,13 @@
-package datum.algebras
-
-import datum.algebras.defaults._
-import datum.patterns.{data, schemas}
-import datum.patterns.schemas._
-import datum.patterns.properties._
-import datum.patterns.data.{Data, DataF, ObjValue, RowValue}
+package datum.algebras.defaults
 
 import cats.instances.either._
-import org.scalatest.{Matchers, WordSpec}
+import datum.algebras.defaults
+import datum.patterns.data.{Data, DataF, ObjValue, RowValue}
+import datum.patterns.properties._
+import datum.patterns.schemas._
+import datum.patterns.{data, schemas}
 import higherkindness.droste.data.Fix
+import org.scalatest.{Matchers, WordSpec}
 
 class DefaultsSpec extends WordSpec with Matchers {
 
@@ -108,7 +107,7 @@ class DefaultsSpec extends WordSpec with Matchers {
 
       check.values should contain allOf (data.text("Bob"), data.boolean(true), data.integer(42))
     }
-    
+
     "resize columns modifier should work" in {
       val person: Schema = schemas.row(Map(defaults.modifiers.EnableColumnDefaultExpansion.enable))(
         Column(schemas.value(TextType), Some("name")),
@@ -129,7 +128,6 @@ class DefaultsSpec extends WordSpec with Matchers {
 
       r1.values should contain allOf (data.text("Bob"), data.boolean(true), data.integer(42))
       r2.values should contain allOf (data.empty, data.boolean(true), data.integer(42))
-
     }
 
     "fail to compile an invalid obj schema" in {
@@ -140,7 +138,7 @@ class DefaultsSpec extends WordSpec with Matchers {
     "fail to compile an invalid row schema" in {
       val schema: Schema = schemas.row()(
         Column(schemas.value(IntType)),
-        Column(schemas.value(IntType, defaults.use("not an int".prop)))
+        schemas.col("foo", schemas.value(IntType, defaults.use("not an int".prop)))
       )
       compiler.compile(schema) shouldBe a[Left[_, _]]
     }
