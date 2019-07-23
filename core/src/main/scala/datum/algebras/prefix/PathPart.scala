@@ -16,7 +16,7 @@ object PathPart {
     case Index(i, None)              => s"[${i.toString}]"
     case Index(_, Some(hdr))         => s"[$hdr]"
     case ArrayPart                   => "(Array)"
-    case NamedSelection(selection)   => s"{selected:$selection}"
-    case IndexedSelection(selection) => s"{index:$selection}"
+    case NamedSelection(selection)   => s"{$selection}"
+    case IndexedSelection(selection) => s"{$selection}"
   }
 }
