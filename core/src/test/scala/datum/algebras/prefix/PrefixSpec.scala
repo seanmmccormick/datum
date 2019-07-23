@@ -48,8 +48,8 @@ class PrefixSpec extends WordSpec with Matchers {
 
       val result: List[String] = fn(prefix)
 
-      result should contain("/{selected:foo}/ok")
-      result should contain("/{selected:bar}")
+      result should contain("/{foo}/ok")
+      result should contain("/{bar}")
     }
   }
 
