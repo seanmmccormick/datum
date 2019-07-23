@@ -1,13 +1,14 @@
 package datum.algebras.defaults
 
+import cats.MonadError
 import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
-
-import cats.syntax.either._
+import cats.syntax.all._
+import datum.algebras.prefix.{Prefix, SchemaWithPrefixF}
 import higherkindness.droste._
-import higherkindness.droste.data.Attr
-import scala.collection.mutable
+import higherkindness.droste.data.{Attr, AttrF}
+import higherkindness.droste.data.prelude._
 
 /*
  * Given a Schema with "default" attributes, this:
@@ -15,84 +16,59 @@ import scala.collection.mutable
  *  2) Generates the default data value from the attribute value
  *  3) Returns the annotated SchemaF tree with default values attached
  */
-class CompileDefaults(rules: AttributeCompilationRules) {
+class CompileDefaults[M[_]](rules: PropertyToDefaultRules[M])(implicit M: MonadError[M, Throwable]) {
 
-  // Mutable class to collect data about errors for a given Schema
-  private[this] case class ErrorFound(error: String) {
-    private val paths: mutable.Buffer[String] = mutable.Buffer.empty
-
-    def updatePath(t: String): ErrorFound = {
-      paths.prepend(t)
-      this
-    }
-
-    def asString: String = s"Invalid schema definition at { ${paths.mkString("/")} }:\n\t$error"
-  }
-
-  private val empty = Right(data.empty)
+  private val empty = M.pure(data.empty)
 
   // This function helps Scala infer types
   private def using(
-    compiled: Either[String, Data],
+    prefix: Prefix,
+    compiled: M[Data],
     schema: SchemaF[Attr[SchemaF, Data]]
-  ): Either[ErrorFound, Attr[SchemaF, Data]] = {
+  ): M[Attr[SchemaF, Data]] = {
     compiled
       .map { default =>
         Attr.apply(default, schema)
       }
-      .leftMap(ErrorFound.apply)
+      .adaptError {
+        case err => ErrorFoundOnCompile(prefix, err)
+      }
   }
 
-  private val algebra: Algebra[SchemaF, Either[ErrorFound, Attr[SchemaF, Data]]] = {
-    def withType(tpe: Type)(result: Either[ErrorFound, Attr[SchemaF, Data]]) = {
-      result.leftMap(x => x.updatePath(s"(${Type.asString(tpe)})"))
-    }
+  private val algebra: Algebra[SchemaWithPrefixF, M[Attr[SchemaF, Data]]] = {
 
-    Algebra[SchemaF, Either[ErrorFound, Attr[SchemaF, Data]]] {
-      case v @ ValueF(IntType, attrs) if attrs.contains(key) =>
-        withType(IntType) { using(rules.integer(attrs(key)), v) }
+    Algebra[SchemaWithPrefixF, M[Attr[SchemaF, Data]]] {
+      case AttrF(prefix, v @ ValueF(IntType, attrs)) if attrs.contains(key) =>
+        using(prefix, rules.integer(attrs(key)), v)
 
-      case v @ ValueF(TextType, attrs) if attrs.contains(key) =>
-        withType(TextType) { using(rules.text(attrs(key)), v) }
+      case AttrF(prefix, v @ ValueF(TextType, attrs)) if attrs.contains(key) =>
+        using(prefix, rules.text(attrs(key)), v)
 
-      case v @ ValueF(BooleanType, attrs) if attrs.contains(key) =>
-        withType(BooleanType) { using(rules.boolean(attrs(key)), v) }
+      case AttrF(prefix, v @ ValueF(BooleanType, attrs)) if attrs.contains(key) =>
+        using(prefix, rules.boolean(attrs(key)), v)
 
-      case v @ ValueF(_, _) => using(empty, v)
+      case AttrF(prefix, v @ ValueF(ZonedDateTimeType, attrs)) if attrs.contains(key) =>
+        using(prefix, rules.zonedTime(attrs(key)), v)
 
-      case ObjF(fields, attrs) =>
-        fields.collectFirst {
-          case (k, Left(err)) => Left(err.updatePath(k))
-        } getOrElse {
-          val valid = fields.mapValues {
-            case Right(ok) => ok
-            case Left(err) => throw new Exception(s"Impossible: $err")
-          }
-          using(empty, ObjF(valid, attrs))
+      // Otherwise
+      case AttrF(prefix, other) =>
+        cats.Traverse[SchemaF].sequence(other).flatMap { ok =>
+          using(prefix, empty, ok)
         }
-
-      case RowF(elements, attrs) =>
-        elements.zipWithIndex.collectFirst {
-          case (Column(Left(err), header), idx) =>
-            val path = s"[${if (header.isDefined) header.get else s"$idx"}]"
-            Left(err.updatePath(path))
-        } getOrElse {
-          using(empty, RowF(elements.map(x => x.copy(x.value.right.get)), attrs))
-        }
-
-      case otherwise => Left(ErrorFound(s"TODO map: $otherwise"))
-
     }
   }
 
-  private val generator = scheme.cata(algebra)
+  // Use hylo to add a prefix to the Schema and apply the defaults algebra
+  private val generator = scheme.hylo(algebra, Prefix.coalgebra)
 
-  def compile(schema: Schema): Either[String, Attr[SchemaF, Data]] = {
-    val compileFn = generator(schema)
-    compileFn.leftMap(_.asString)
-  }
+  def compile(schema: Schema): M[Attr[SchemaF, Data]] =
+    generator((Prefix.root, schema))
 }
 
 object CompileDefaults {
-  def apply(rules: AttributeCompilationRules = DefaultCompilationRules): CompileDefaults = new CompileDefaults(rules)
+
+  // def apply(rules: PropertyCompilationRules = DefaultCompilationRules): CompileDefaults = new CompileDefaults(rules)
+  def apply[M[_]](rules: PropertyToDefaultRules[M])(implicit M: MonadError[M, Throwable]): CompileDefaults[M] = {
+    new CompileDefaults(rules)
+  }
 }

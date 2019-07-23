@@ -1,26 +1,27 @@
-package datum.algebras
+package datum.algebras.defaults
 
-import datum.algebras.defaults._
-import datum.patterns.{data, schemas}
-import datum.patterns.schemas._
-import datum.patterns.attributes._
-import org.scalatest.{Matchers, WordSpec}
+import cats.instances.either._
+import datum.algebras.defaults
 import datum.patterns.data.{Data, DataF, ObjValue, RowValue}
+import datum.patterns.properties._
+import datum.patterns.schemas._
+import datum.patterns.{data, schemas}
 import higherkindness.droste.data.Fix
+import org.scalatest.{Matchers, WordSpec}
 
 class DefaultsSpec extends WordSpec with Matchers {
 
   /* Constructs a "schema compiler" that has rules for taking
    * the schema's "default" Attributes and converting it into Data.
    */
-  val compiler = CompileDefaults()
+  val compiler = CompileDefaults(DefaultPropertyToDefaultRules.either)
 
   "The Defaults algebra" should {
     "work given a basic example" in {
       val person: Schema = schemas.obj()(
         "name" -> schemas.value(TextType),
-        "foo" -> schemas.value(BooleanType, defaults.use(property(true))),
-        "age" -> schemas.value(IntType, defaults.use(property(42)))
+        "foo" -> schemas.value(BooleanType, defaults.use(true.prop)),
+        "age" -> schemas.value(IntType, defaults.use(42.prop))
       )
 
       val sample: Data = data.obj(
@@ -54,10 +55,10 @@ class DefaultsSpec extends WordSpec with Matchers {
 
     "insert fields given an empty input data obj" in {
       val schema: Schema = schemas.obj()(
-        "foo" -> schemas.value(TextType, defaults.use(property("hello"))),
-        "bar" -> schemas.value(IntType, defaults.use(property(1))),
+        "foo" -> schemas.value(TextType, defaults.use("hello".prop)),
+        "bar" -> schemas.value(IntType, defaults.use(1.prop)),
         "nested" -> schemas.obj()(
-          "inner" -> schemas.value(BooleanType, defaults.use(property(false)))
+          "inner" -> schemas.value(BooleanType, defaults.use(false.prop))
         ),
         "nope" -> schemas.obj()("missing" -> schemas.value(TextType))
       )
@@ -85,8 +86,8 @@ class DefaultsSpec extends WordSpec with Matchers {
     "insert default fields for a Row" in {
       val person: Schema = schemas.row()(
         Column(schemas.value(TextType), Some("name")),
-        Column(schemas.value(BooleanType, defaults.use(property(true))), Some("foo")),
-        Column(schemas.value(IntType, defaults.use(property(42))), Some("age"))
+        Column(schemas.value(BooleanType, defaults.use(true.prop)), Some("foo")),
+        Column(schemas.value(IntType, defaults.use(42.prop)), Some("age"))
       )
 
       val sample1: Data = data.row(
@@ -110,8 +111,8 @@ class DefaultsSpec extends WordSpec with Matchers {
     "resize columns modifier should work" in {
       val person: Schema = schemas.row(Map(defaults.modifiers.EnableColumnDefaultExpansion.enable))(
         Column(schemas.value(TextType), Some("name")),
-        Column(schemas.value(BooleanType, defaults.use(property(true))), Some("foo")),
-        Column(schemas.value(IntType, defaults.use(property(42))), Some("age"))
+        Column(schemas.value(BooleanType, defaults.use(true.prop)), Some("foo")),
+        Column(schemas.value(IntType, defaults.use(42.prop)), Some("age"))
       )
 
       val annotated = compiler.compile(person).right.get
@@ -127,18 +128,17 @@ class DefaultsSpec extends WordSpec with Matchers {
 
       r1.values should contain allOf (data.text("Bob"), data.boolean(true), data.integer(42))
       r2.values should contain allOf (data.empty, data.boolean(true), data.integer(42))
-
     }
 
     "fail to compile an invalid obj schema" in {
-      val schema: Schema = schemas.obj()("fail" -> schemas.value(IntType, defaults.use(property("not an int"))))
+      val schema: Schema = schemas.obj()("fail" -> schemas.value(IntType, defaults.use("not an int".prop)))
       compiler.compile(schema) shouldBe a[Left[_, _]]
     }
 
     "fail to compile an invalid row schema" in {
       val schema: Schema = schemas.row()(
         Column(schemas.value(IntType)),
-        Column(schemas.value(IntType, defaults.use(property("not an int"))))
+        schemas.col("foo", schemas.value(IntType, defaults.use("not an int".prop)))
       )
       compiler.compile(schema) shouldBe a[Left[_, _]]
     }

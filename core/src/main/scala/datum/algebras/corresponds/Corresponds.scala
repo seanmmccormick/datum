@@ -1,8 +1,9 @@
-package datum.algebras
+package datum.algebras.corresponds
 import datum.modifiers.Optional
-import datum.patterns.{attributes, data}
+import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
+import datum.patterns.properties._
 import higherkindness.droste.data.Fix
 import higherkindness.droste.{Algebra, scheme}
 
@@ -72,7 +73,7 @@ object Corresponds {
   }
 
   def optional(alg: Algebra[SchemaF, Data => Boolean]): Algebra[SchemaF, Data => Boolean] = Algebra {
-    case x if x.attributes.get(Optional.key).contains(attributes.property(true)) => {
+    case x if x.properties.get(Optional.key).contains(true.prop) => {
       case data.empty => true
       case otherwise  => alg(x)(otherwise)
     }
