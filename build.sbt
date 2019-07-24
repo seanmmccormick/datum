@@ -72,7 +72,8 @@ lazy val avro = (project in file("avro"))
   .settings(
     name := "datum-avro",
     libraryDependencies ++= Seq(
-      "org.apache.avro" % "avro" % "1.9.0"
+      "org.apache.avro" % "avro" % "1.9.0",
+      "org.xerial.snappy" % "snappy-java" % "1.1.7.3" % Test
     )
   )
   .settings(sonatypePublish)

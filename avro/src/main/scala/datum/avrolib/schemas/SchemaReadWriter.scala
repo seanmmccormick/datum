@@ -47,10 +47,6 @@ object SchemaReadWriter {
       var modified = false
 
       inp.iterator.foreach {
-        case ' ' | '\n' | '\t' =>
-          builder.append('_')
-          modified = true
-
         case x if x.isLetterOrDigit =>
           builder.append(x)
 
@@ -197,8 +193,7 @@ object SchemaReadWriter {
               fields.foreach { field =>
                 objFields += (originalName(field) -> field.schema())
               }
-              val props = extractProps(avro)
-              ObjF(objFields.result(), props)
+              ObjF(objFields.result(), extractProps(avro))
 
             case "row" =>
               val columns = fields.view.map { field =>
@@ -210,8 +205,8 @@ object SchemaReadWriter {
 
                 Column(field.schema(), header)
               }.toVector
-              val props = extractProps(avro)
-              RowF(columns, props)
+
+              RowF(columns, extractProps(avro))
 
             case _ => ???
           }
