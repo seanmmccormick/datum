@@ -23,11 +23,11 @@ final case class ObjF[R](
 }
 
 final case class RowF[R](
-  elements: Vector[Column[R]],
+  columns: Vector[Column[R]],
   properties: PropertyMap = Map.empty
 ) extends SchemaF[R] {
   override def withProperties(additional: (String, Property)*): SchemaF[R] =
-    RowF(elements, properties ++ additional)
+    RowF(columns, properties ++ additional)
 }
 
 final case class ArrayF[R](
@@ -68,23 +68,23 @@ object SchemaF {
       fa match {
         case v @ ValueF(_, _) => G.pure(v)
 
-        case RowF(elems, attrs) =>
-          val tl = Traverse[Vector].traverse(elems) { e =>
+        case RowF(columns, props) =>
+          val tl = Traverse[Vector].traverse(columns) { e =>
             G.map(f(e.value))(Column.apply(_, e.header))
           }
-          G.map(tl)(x => RowF(x, attrs))
+          G.map(tl)(x => RowF(x, props))
 
-        case ObjF(fields, attrs) =>
+        case ObjF(fields, props) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(fields)(f)
-          G.map(tm)(x => ObjF(x, attrs))
+          G.map(tm)(x => ObjF(x, props))
 
-        case NamedUnionF(alts, attrs) =>
+        case NamedUnionF(alts, props) =>
           val tm = Traverse[SortedMap[String, ?]].traverse(alts)(f)
-          G.map(tm)(x => NamedUnionF(x, attrs))
+          G.map(tm)(x => NamedUnionF(x, props))
 
-        case IndexedUnionF(alts, attrs) =>
+        case IndexedUnionF(alts, props) =>
           val tv = Traverse[Vector].traverse(alts)(f)
-          G.map(tv)(x => IndexedUnionF(x, attrs))
+          G.map(tv)(x => IndexedUnionF(x, props))
 
         case ArrayF(e, meta) => G.map(f(e))(x => ArrayF(x, meta))
       }

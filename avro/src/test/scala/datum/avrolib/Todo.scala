@@ -17,16 +17,26 @@ import scala.collection.mutable
 
 object Todo extends App {
 
-  val simple = s.obj()(
-    "foo" -> s.value(IntType),
-    "Unnamed" -> s.value(TextType),
-    "" -> s.obj()(
-      "foo" -> s.value(IntType),
-      "bar" -> s.value(BooleanType, Optional.enable)
-    ),
-    "bar" -> s.value(BooleanType, Optional.enable)
-  )
+//  val simple = s.obj()(
+//    "foo" -> s.value(IntType),
+//    "Unnamed" -> s.value(TextType),
+//    "" -> s.obj()(
+//      "foo" -> s.value(IntType),
+//      "bar" -> s.value(BooleanType, Optional.enable)
+//    ),
+//    "bar" -> s.value(BooleanType, Optional.enable)
+//  )
 
+  val simple = s.row()(
+    s.col("foo", s.value(IntType)),
+    s.col("",
+          s.obj()(
+            "foo" -> s.value(IntType),
+            "bar" -> s.value(BooleanType, Optional.enable)
+          )),
+    s.col("Unnamed1", s.value(TextType)),
+    s.col("bar", s.value(BooleanType))
+  )
 
   val toGenericRecord = RecordWriter.generateFor(simple)
 
@@ -51,7 +61,6 @@ object Todo extends App {
 
   foo.close()
 
-
   // to read a file
   val gdr = new GenericDatumReader[GenericRecord]()
 
@@ -64,7 +73,7 @@ object Todo extends App {
   val fromGenericRecord = RecordReader.generateFor(simple)
 
   println("===============================================")
-  while(reader.hasNext) {
+  while (reader.hasNext) {
     reader.next(record)
     pprint.pprintln(record)
     pprint.pprintln(fromGenericRecord(record))
@@ -72,6 +81,5 @@ object Todo extends App {
   }
 
   println(buffer.toList == wat)
-
 
 }

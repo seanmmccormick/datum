@@ -47,22 +47,39 @@ object RecordWriter {
 
     Algebra[SchemaWithAvro, Data => Any] {
 
-      case AttrF(None, ValueF(tpe, props)) =>
+      case AttrF(None, ValueF(tpe, _)) =>
         d =>
           extract(tpe, Fix.un[DataF](d), false) //todo: isOpt
 
-      case AttrF(Some(avro), ObjF(fields, props)) =>
+      case AttrF(Some(avro), ObjF(fields, _)) =>
         Fix.un[DataF](_) match {
           case ObjValue(values) =>
-            val geeneric = new GenericRecordBuilder(avro)
+            val generic = new GenericRecordBuilder(avro)
 
             // Have to zip with avro fields because fields may have been renamed
             avro.getFields.asScala.zip(fields).foreach {
               case (avroField, (key, fn)) =>
                 val d = values.getOrElse(key, empty)
-                geeneric.set(avroField, fn(d))
+                generic.set(avroField, fn(d))
             }
-            geeneric.build()
+            generic.build()
+
+          case otherwise => ???
+        }
+
+      case AttrF(Some(avro), RowF(columns, props)) =>
+        Fix.un[DataF](_) match {
+          case RowValue(values) =>
+            val generic = new GenericRecordBuilder(avro)
+            val records = columns.zip(values).map {
+              case (col, v) =>
+                col.value.apply(v)
+            }
+            avro.getFields.asScala.zip(records).foreach {
+              case (avroField, record) =>
+                generic.set(avroField, record)
+            }
+            generic.build()
 
           case otherwise => ???
         }

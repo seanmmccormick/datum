@@ -29,10 +29,13 @@ object RecordReader {
     }
 
     Algebra {
-      case ObjF(fields, prop) =>
+      case ValueF(tpe, _) =>
+        any =>
+          asData(tpe, any)
+
+      case ObjF(fields, _) =>
         any =>
           val generic = any.asInstanceOf[GenericRecord]
-
           val builder = SortedMap.newBuilder[String, Data]
 
           // Have to zip with the record's schema because the (avro) field name may not match the (datum) schema name
@@ -41,12 +44,19 @@ object RecordReader {
             case ((key, fn), avroField) =>
               builder += key -> fn(generic.get(avroField.name()))
           }
-
           data.obj(builder.result())
 
-      case ValueF(tpe, _) =>
-        any =>
-          asData(tpe, any)
+      case RowF(columns, _) => {
+        case generic: GenericRecord =>
+          // As in the case with Obj, zip with the avro fields to get the correct name
+          val values = columns.zip(generic.getSchema.getFields.asScala).map {
+            case (col, avroField) =>
+              col.value.apply(generic.get(avroField.name()))
+          }
+
+          data.row(values)
+        case _ => ???
+      }
 
       case otherwise =>
         assert(false, "TODOOO: READ RECOOORD")

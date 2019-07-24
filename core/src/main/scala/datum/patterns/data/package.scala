@@ -18,15 +18,15 @@ package object data {
   }
 
   def row(
-    elements: Vector[Data]
+    columns: Vector[Data]
   ): Data = {
-    Fix(RowValue(elements))
+    Fix(RowValue(columns))
   }
 
   def row(
-    elements: Data*
+    columns: Data*
   ): Data = {
-    Fix(RowValue(Vector(elements: _*)))
+    Fix(RowValue(Vector(columns: _*)))
   }
 
   def array(elements: Vector[Data]): Data = row(elements)
