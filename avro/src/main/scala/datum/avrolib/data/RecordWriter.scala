@@ -1,13 +1,14 @@
 package datum.avrolib.data
-import datum.avrolib.schemas.{AvroSchemaWriter, AvroSchemaReader}
+import datum.avrolib.schemas.{AvroSchemaReader, AvroSchemaWriter}
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
 import higherkindness.droste.data.{AttrF, Fix}
 import higherkindness.droste.data.prelude._
 import higherkindness.droste.{Algebra, Coalgebra, scheme}
+import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.{Schema => AvroSchema}
+import org.apache.avro.{SchemaBuilder, Schema => AvroSchema}
 import org.apache.avro.generic.GenericRecordBuilder
 
 import scala.collection.JavaConverters._
@@ -25,6 +26,14 @@ object RecordWriter {
       case obj @ RowF(_, _) =>
         val avro = AvroSchemaWriter.write(schema)
         AttrF(Some(avro), obj)
+
+      case indexed @ IndexedUnionF(_, _) =>
+        val avro = AvroSchemaWriter.write(schema)
+        AttrF(Some(avro), indexed)
+
+      case named @ NamedUnionF(_, _) =>
+        val avro = AvroSchemaWriter.write(schema)
+        AttrF(Some(avro), named)
 
       case otherwise => AttrF(None, otherwise)
     }
@@ -84,8 +93,32 @@ object RecordWriter {
           case otherwise => ???
         }
 
-      case otherwise =>
-        assert(false, "TODOOOOOOOOOOOOOOO")
+      case AttrF(Some(avro), IndexedUnionF(alts, _)) =>
+        Fix.un[DataF](_) match {
+          case IndexedUnionValue(idx, value) =>
+            val selected = avro.getTypes.asScala(idx)
+            val generic = new Record(selected)
+            generic.put("schema", alts(idx)(value))
+            generic
+        }
+
+      case AttrF(Some(avro), NamedUnionF(alts, _)) =>
+        Fix.un[DataF](_) match {
+          case NamedUnionValue(selection, value) =>
+            val selected = avro.getTypes.asScala.find { s =>
+              val name = s.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY) match {
+                case null => s.getName
+                case orig => orig
+              }
+              name == selection
+            }
+            val generic = new Record(selected.get)
+            generic.put("schema", alts(selection)(value))
+            generic
+        }
+
+      case AttrF(_, otherwise) =>
+        assert(false, s"TODO: ${pprint.apply(otherwise)}")
         ???
     }
   }

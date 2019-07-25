@@ -13,6 +13,8 @@ import scala.collection.JavaConverters._
 
 object RecordReader {
 
+  // TODO - REAL ERROR HANDLING!
+
   val algebra: Algebra[SchemaF, AnyRef => Data] = {
 
     def asData(tpe: Type, any: Any): Data = {
@@ -53,13 +55,31 @@ object RecordReader {
             case (col, avroField) =>
               col.value.apply(generic.get(avroField.name()))
           }
-
           data.row(values)
         case _ => ???
       }
 
+      case NamedUnionF(alts, _) => {
+        case generic: GenericRecord =>
+          val name = generic.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY) match {
+            case null => generic.getSchema.getName
+            case orig => orig
+          }
+          data.union(name, alts(name)(generic.get("schema")))
+
+        case _ => ???
+      }
+
+      case IndexedUnionF(alts, _) => {
+        case generic: GenericRecord =>
+          // Name of this record will be "_$idx", eg _0, _1, etc..
+          val idx = generic.getSchema.getName.drop(1).toInt
+          data.indexed(idx, alts(idx)(generic.get("schema")))
+        case _ => ???
+      }
+
       case otherwise =>
-        assert(false, "TODOOO: READ RECOOORD")
+        assert(false, s"TODOOO: READ RECOOORD: $otherwise")
         ???
     }
   }

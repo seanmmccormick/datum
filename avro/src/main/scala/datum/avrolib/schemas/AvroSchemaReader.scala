@@ -117,7 +117,7 @@ object AvroSchemaReader {
     props.result()
   }
 
-  private def originalName(field: AvroSchema.Field) = {
+  def originalName(field: AvroSchema.Field) = {
     if (field.schema().isUnion) {
       field.schema().getTypes.asScala.last.getProp(ORIGINAL_NAME_KEY) match {
         case null => field.name()
