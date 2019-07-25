@@ -1,5 +1,5 @@
 package datum.avrolib.data
-import datum.avrolib.schemas.SchemaReadWriter
+import datum.avrolib.schemas.{AvroSchemaWriter, AvroSchemaReader}
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
@@ -19,11 +19,11 @@ object RecordWriter {
   val annotate: Coalgebra[SchemaWithAvro, Schema] = Coalgebra { schema =>
     Fix.un[SchemaF](schema) match {
       case obj @ ObjF(_, _) =>
-        val avro = SchemaReadWriter.toAvroSchema(schema)
+        val avro = AvroSchemaWriter.write(schema)
         AttrF(Some(avro), obj)
 
       case obj @ RowF(_, _) =>
-        val avro = SchemaReadWriter.toAvroSchema(schema)
+        val avro = AvroSchemaWriter.write(schema)
         AttrF(Some(avro), obj)
 
       case otherwise => AttrF(None, otherwise)

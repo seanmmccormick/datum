@@ -1,7 +1,7 @@
 package datum.avrolib
 
 import datum.avrolib.data.{RecordReader, RecordWriter}
-import datum.avrolib.schemas.SchemaReadWriter
+import datum.avrolib.schemas.{AvroSchemaWriter, AvroSchemaReader}
 import datum.gen.algebras.DataGen
 import datum.modifiers.Optional
 import datum.patterns.data.Data
@@ -47,7 +47,7 @@ object Todo extends App {
   pprint.pprintln(wat.map(toGenericRecord))
 
   // to write a file:
-  val avro = SchemaReadWriter.toAvroSchema(simple)
+  val avro = AvroSchemaWriter.write(simple)
 
   val hrm = new GenericDatumWriter[GenericRecord]()
 
