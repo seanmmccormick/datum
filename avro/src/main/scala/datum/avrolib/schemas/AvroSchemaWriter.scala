@@ -108,14 +108,17 @@ object AvroSchemaWriter {
     case NamedUnionF(alts, props) =>
       val fingerprint = alts.hashCode()
       union(fingerprint, props, "named") { buffer =>
-        val seen = mutable.Map.empty[String, Int].withDefaultValue(0)
-        alts.foreach {
-          case (k, v) =>
-            val (name, modified) = uniqueName(k, 0, seen)
-            val record = SchemaBuilder.record(name).fields().name("schema").`type`(v).noDefault().endRecord()
-            if (modified) {
-              record.addProp(ORIGINAL_NAME_KEY, k)
-            }
+        alts.zipWithIndex.foreach {
+          case ((k, alt), idx) =>
+            val record =
+              SchemaBuilder
+                .record("r%x_%d".format(fingerprint, idx))
+                .fields()
+                .name("schema")
+                .`type`(alt)
+                .noDefault()
+                .endRecord()
+            record.addProp(ORIGINAL_NAME_KEY, k)
             buffer.append(record)
         }
       }
@@ -125,7 +128,18 @@ object AvroSchemaWriter {
       union(fingerprint, props, "indexed") { buffer =>
         alts.zipWithIndex.foreach {
           case (v, idx) =>
-            buffer.append(SchemaBuilder.record(s"_$idx").fields().name("schema").`type`(v).noDefault().endRecord())
+            val record =
+              SchemaBuilder
+                .record("r%x_%d".format(fingerprint, idx))
+                .fields()
+                .name("schema")
+                .`type`(v)
+                .noDefault()
+                .endRecord()
+
+            // (ab)use the ORIGINAL_NAME_KEY to store the explicit index as a prop
+            record.addProp(ORIGINAL_NAME_KEY, idx)
+            buffer.append(record)
         }
       }
   }
@@ -186,35 +200,6 @@ object AvroSchemaWriter {
     if (result == "") ("Unnamed", true)
     else if (!(result.head.isLetter || result.head == '_')) (s"_$result", true)
     else (result, modified)
-  }
-
-  // Helper function to ensure in addition to safeName, duplicate field names are also handled correctly.
-  // Original name is stored in ORIGINAL_NAME_KEY as an avro property, if it is needed
-  private def safeFieldNamez(field: AvroSchema, original: String, idx: Int, seen: mutable.Map[String, Int]): String = {
-
-    def next(check: String): String = {
-      val result =
-        if (seen(check) == 0) check
-        else next(s"$check${seen(check) + 1}")
-      seen(check) += 1
-      result
-    }
-
-    val (safe, modified) = safeName(original)
-
-    if (modified) {
-      safeAddProp(field, ORIGINAL_NAME_KEY, original)
-    }
-
-    if (seen(safe) == 0) {
-      seen(safe) += 1
-      safe
-    } else {
-      if (!modified) {
-        safeAddProp(field, ORIGINAL_NAME_KEY, original)
-      }
-      next(safe)
-    }
   }
 
   private def uniqueName(original: String, idx: Int, seen: mutable.Map[String, Int]): (String, Boolean) = {

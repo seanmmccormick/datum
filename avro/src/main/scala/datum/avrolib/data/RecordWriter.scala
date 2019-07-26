@@ -1,5 +1,8 @@
 package datum.avrolib.data
-import datum.avrolib.schemas.{AvroSchemaReader, AvroSchemaWriter}
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+import datum.avrolib.schemas.AvroSchemaWriter
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
@@ -8,7 +11,7 @@ import higherkindness.droste.data.prelude._
 import higherkindness.droste.{Algebra, Coalgebra, scheme}
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.{SchemaBuilder, Schema => AvroSchema}
+import org.apache.avro.{Schema => AvroSchema}
 import org.apache.avro.generic.GenericRecordBuilder
 
 import scala.collection.JavaConverters._
@@ -43,14 +46,19 @@ object RecordWriter {
 
     def extract(tpe: Type, d: DataF[Data], isOpt: Boolean): Any = {
       (tpe, d) match {
-        case (IntType, data.IntValue(v))         => v
-        case (TextType, data.TextValue(v))       => v
-        case (LongType, data.LongValue(v))       => v
-        case (BooleanType, data.BooleanValue(v)) => v
-        case (DoubleType, data.DoubleValue(v))   => v
-        case (FloatType, data.FloatValue(v))     => v
-        case (_, data.EmptyValue) if isOpt       => null
-        case (x, _)                              => throw new Exception(s"Not handled: $x")
+        case (IntType, data.IntValue(v))                 => v
+        case (TextType, data.TextValue(v))               => v
+        case (LongType, data.LongValue(v))               => v
+        case (BooleanType, data.BooleanValue(v))         => v
+        case (DoubleType, data.DoubleValue(v))           => v
+        case (FloatType, data.FloatValue(v))             => v
+        case (DateType, data.DateValue(v))               => v.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        case (TimestampType, data.TimestampValue(v))     => v.getEpochSecond * 1000 //expects millis
+        case (DateTimeType, data.DateTimeValue(v))       => v.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        case (ZonedDateTimeType, data.ZonedTimeValue(v)) => v.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)
+        case (BytesType, data.BytesValue(v))             => java.nio.ByteBuffer.wrap(v)
+        case (_, data.EmptyValue) if isOpt               => null
+        case (x, _)                                      => throw new Exception(s"Not handled: $x")
       }
     }
 
@@ -100,21 +108,28 @@ object RecordWriter {
             val generic = new Record(selected)
             generic.put("schema", alts(idx)(value))
             generic
+          case otherwise => ???
+        }
+
+      case AttrF(None, ArrayF(conforms, _)) =>
+        Fix.un[DataF](_) match {
+          case RowValue(values) =>
+            values.map(conforms).asJava
+          case otherwise => ???
         }
 
       case AttrF(Some(avro), NamedUnionF(alts, _)) =>
         Fix.un[DataF](_) match {
           case NamedUnionValue(selection, value) =>
+            // NamedUnion record must be written with the original name set as a prop
             val selected = avro.getTypes.asScala.find { s =>
-              val name = s.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY) match {
-                case null => s.getName
-                case orig => orig
-              }
-              name == selection
+              selection == s.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
             }
             val generic = new Record(selected.get)
             generic.put("schema", alts(selection)(value))
             generic
+
+          case otherwise => ???
         }
 
       case AttrF(_, otherwise) =>

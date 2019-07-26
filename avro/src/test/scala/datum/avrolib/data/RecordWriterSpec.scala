@@ -1,21 +1,14 @@
 package datum.avrolib.data
 
-import datum.avrolib.schemas.AvroSchemaWriter
-import datum.gen.algebras.DataGen
+import java.time._
+
+import datum.avrolib.util.TestSchemas
 import datum.modifiers.Optional
-import datum.patterns.data.Data
 import datum.patterns.{data => d}
 import datum.patterns.schemas
 import datum.patterns.schemas._
-import org.apache.avro.file.{DataFileReader, DataFileWriter}
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.generic.GenericData.{Record => AvroRecord}
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{Matchers, WordSpec}
-import org.scalacheck.Prop._
 import org.scalatestplus.scalacheck.Checkers
-
-import scala.collection.mutable
 
 class RecordWriterSpec extends WordSpec with Checkers with Matchers {
 
@@ -33,57 +26,40 @@ class RecordWriterSpec extends WordSpec with Checkers with Matchers {
       generic.get("bar") shouldBe true
     }
 
-    "encode data for an indexed union" in {
-      val schema = schemas.obj()(
-        "test" -> schemas.indexed()(schemas.value(IntType), schemas.value(IntType)),
-        "other" -> schemas.union()("a" -> schemas.value(BooleanType), "" -> schemas.value(TextType))
+    "encode all value types" in {
+      val toGenericRecord = RecordWriter.generateFor(TestSchemas.types)
+
+      val r1 = d.obj(
+        "int" -> d.integer(0),
+        "long" -> d.long(0),
+        "float" -> d.float(0),
+        "double" -> d.double(0),
+        "text" -> d.text("foo"),
+        "bytes" -> d.bytes(Array(0.toByte, 255.toByte, 1.toByte)),
+        "bool" -> d.boolean(true),
+        "date" -> d.date(LocalDate.of(1970, 1, 1)),
+        "timestamp" -> d.timestamp(Instant.ofEpochSecond(1000)),
+        "date_time" -> d.localTime(LocalDateTime.of(1970, 1, 1, 10, 10, 10)),
+        "zoned_date_time" -> d.zonedTime(
+          ZonedDateTime.ofInstant(Instant.ofEpochSecond(1000), ZoneId.of("America/Los_Angeles")))
       )
 
-      implicit val arb: Arbitrary[List[Data]] = Arbitrary {
-        for {
-          data <- Gen.nonEmptyListOf(DataGen.define()(schema))
-        } yield data
-      }
+      val generic = toGenericRecord(r1)
 
-      check {
-        forAll { data: List[Data] =>
-          Roundtrip(schema, data) == data
-        }
-      }
+      generic.get("int") shouldBe 0
+      generic.get("long") shouldBe 0
+      generic.get("float") shouldBe 0
+      generic.get("double") shouldBe 0
+      generic.get("text") shouldBe "foo"
+      generic.get("bytes") shouldBe Array(0.toByte, 255.toByte, 1.toByte)
+      generic.get("bool") shouldBe true
+      generic.get("date") shouldBe LocalDate.of(1970, 1, 1)
+      generic.get("timestamp") shouldBe Instant.ofEpochSecond(1000)
+      generic.get("date_time") shouldBe LocalDateTime.of(1970, 1, 1, 10, 10, 10)
+      generic.get("zoned_date_time") shouldBe ZonedDateTime.ofInstant(
+        Instant.ofEpochSecond(1000),
+        ZoneId.of("America/Los_Angeles")
+      )
     }
-  }
-}
-
-object Roundtrip {
-
-  def apply(schema: Schema, data: List[Data]): List[Data] = {
-    val avro = AvroSchemaWriter.write(schema)
-    val toGenericRecord = RecordWriter.generateFor(schema)
-
-    val hrm = new GenericDatumWriter[GenericRecord]()
-    val derp = new java.io.File("testing.avro")
-    derp.createNewFile()
-    val foo = new DataFileWriter[GenericRecord](hrm).create(avro, derp)
-
-    data.map(toGenericRecord).foreach(foo.append)
-
-    foo.close()
-
-    // to read a file
-    val gdr = new GenericDatumReader[GenericRecord]()
-
-    val reader = new DataFileReader[GenericRecord](derp, gdr)
-
-    val record = new AvroRecord(reader.getSchema)
-
-    val buffer = mutable.ListBuffer.empty[Data]
-
-    val fromGenericRecord = RecordReader.generateFor(schema)
-
-    while (reader.hasNext) {
-      reader.next(record)
-      buffer.append(fromGenericRecord(record))
-    }
-    buffer.toList
   }
 }
