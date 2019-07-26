@@ -2,6 +2,8 @@ package datum.avrolib.schemas
 import cats.data.State
 import datum.patterns.schemas._
 import datum.avrolib.properties._
+import datum.modifiers.Optional
+import datum.patterns.properties._
 import higherkindness.droste.{AlgebraM, scheme}
 import org.apache.avro.{LogicalType, LogicalTypes, SchemaBuilder, Schema => AvroSchema}
 
@@ -232,11 +234,24 @@ object AvroSchemaWriter {
     field
   }
 
-  private val toAvroSchemaFn = scheme.cataM(algebra)
-
   def write(schema: Schema): AvroSchema = {
-    toAvroSchemaFn(schema).run(Map.empty).value._2
+    using(optional(algebra))(schema)
   }
+
+  def optional(algebra: AlgebraM[Registry, SchemaF, AvroSchema]): AlgebraM[Registry, SchemaF, AvroSchema] =
+    AlgebraM[Registry, SchemaF, AvroSchema] {
+      case x if x.properties.get(Optional.key).contains(true.prop) =>
+        algebra(x).map { generic =>
+          if(!generic.isUnion) {
+            SchemaBuilder.nullable().`type`(generic)
+          } else {
+            val alts = generic.getTypes.asScala
+            alts.prepend(AvroSchema.create(AvroSchema.Type.NULL))
+            AvroSchema.createUnion(alts.asJava)
+          }
+        }
+      case otherwise => algebra(otherwise)
+    }
 
   def using(algebra: AlgebraM[Registry, SchemaF, AvroSchema]): Schema => AvroSchema = {
     val fn = scheme.cataM(algebra)

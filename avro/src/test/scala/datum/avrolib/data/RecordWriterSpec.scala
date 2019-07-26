@@ -61,5 +61,17 @@ class RecordWriterSpec extends WordSpec with Checkers with Matchers {
         ZoneId.of("America/Los_Angeles")
       )
     }
+
+    "handle optional fields" in {
+      val simple = schemas.obj()(
+        "foo" -> schemas.value(IntType),
+        "bar" -> schemas.value(BooleanType, Optional.enable)
+      )
+      val r1 = d.obj("foo" -> d.integer(10), "bar" -> d.empty)
+      val toGenericRecord = RecordWriter.define(RecordWriter.optional(RecordWriter.algebra))(simple)
+
+      val generic = toGenericRecord(r1)
+      generic.get("bar") shouldBe null
+    }
   }
 }

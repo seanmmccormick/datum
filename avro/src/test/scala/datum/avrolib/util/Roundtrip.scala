@@ -1,7 +1,7 @@
 package datum.avrolib.util
 import datum.avrolib.data.{RecordReader, RecordWriter}
 import datum.avrolib.schemas.AvroSchemaWriter
-import datum.patterns.data.{BytesValue, Data, ObjValue}
+import datum.patterns.data.Data
 import datum.patterns.schemas.Schema
 import org.apache.avro.file.{DataFileReader, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
@@ -13,7 +13,7 @@ object Roundtrip {
 
   def apply(schema: Schema, data: List[Data]): List[Data] = {
     val avro = AvroSchemaWriter.write(schema)
-    val toGenericRecord = RecordWriter.generateFor(schema)
+    val toGenericRecord = RecordWriter.define(RecordWriter.optional(RecordWriter.algebra))(schema)
     val fromGenericRecord = RecordReader.generateFor(schema)
 
     val temp = java.io.File.createTempFile("roundtrip", ".avro")

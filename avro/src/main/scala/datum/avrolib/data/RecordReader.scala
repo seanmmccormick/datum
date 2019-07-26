@@ -3,9 +3,11 @@ package datum.avrolib.data
 import java.time.{Instant, LocalDate, LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
+import datum.modifiers.Optional
 import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
+import datum.patterns.properties._
 import higherkindness.droste.{Algebra, scheme}
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.util.Utf8
@@ -61,9 +63,8 @@ object RecordReader {
         any =>
           asData(tpe, any)
 
-      case ObjF(fields, _) =>
-        any =>
-          val generic = any.asInstanceOf[GenericRecord]
+      case ObjF(fields, _) => {
+        case generic: GenericRecord =>
           val builder = SortedMap.newBuilder[String, Data]
 
           // Have to zip with the record's schema because the (avro) field name may not match the (datum) schema name
@@ -74,6 +75,9 @@ object RecordReader {
           }
           data.obj(builder.result())
 
+        case null => data.empty
+      }
+
       case RowF(columns, _) => {
         case generic: GenericRecord =>
           // As in the case with Obj, zip with the avro fields to get the correct name
@@ -82,14 +86,16 @@ object RecordReader {
               col.value.apply(generic.get(avroField.name()))
           }
           data.row(values)
-        case _ => ???
+
+        case null => data.empty
       }
 
       case ArrayF(conforms, _) => {
         case array: GenericData.Array[AnyRef] =>
           val values = array.iterator().asScala.map[Data](conforms)
           data.array(values.toVector)
-        case _ => ???
+        case null => data.empty
+        // case _    => ???
       }
 
       case NamedUnionF(alts, _) => {
@@ -97,14 +103,20 @@ object RecordReader {
           val name = generic.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
           data.union(name, alts(name)(generic.get("schema")))
 
-        case _ => ???
+        case null => data.empty
+
+        // case _ => ???
       }
 
-      case IndexedUnionF(alts, _) => {
+      case IndexedUnionF(alts, props) => {
         case generic: GenericRecord =>
+          val offset = if (props.get(Optional.key).contains(true.prop)) 1 else 0
           val idx = generic.getSchema.getObjectProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY).asInstanceOf[Int]
+
           data.indexed(idx, alts(idx)(generic.get("schema")))
-        case _ => ???
+        case null => data.empty
+
+        //   case _ => ???
       }
 
       case otherwise =>

@@ -1,11 +1,12 @@
 package datum.avrolib.data
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import datum.avrolib.schemas.AvroSchemaWriter
+import datum.modifiers.Optional
 import datum.patterns.data
 import datum.patterns.data._
 import datum.patterns.schemas._
+import datum.patterns.properties._
 import higherkindness.droste.data.{AttrF, Fix}
 import higherkindness.droste.data.prelude._
 import higherkindness.droste.{Algebra, Coalgebra, scheme}
@@ -44,7 +45,7 @@ object RecordWriter {
 
   val algebra: Algebra[SchemaWithAvro, Data => Any] = {
 
-    def extract(tpe: Type, d: DataF[Data], isOpt: Boolean): Any = {
+    def extract(tpe: Type, d: DataF[Data]): Any = {
       (tpe, d) match {
         case (IntType, data.IntValue(v))                 => v
         case (TextType, data.TextValue(v))               => v
@@ -57,7 +58,7 @@ object RecordWriter {
         case (DateTimeType, data.DateTimeValue(v))       => v.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         case (ZonedDateTimeType, data.ZonedTimeValue(v)) => v.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)
         case (BytesType, data.BytesValue(v))             => java.nio.ByteBuffer.wrap(v)
-        case (_, data.EmptyValue) if isOpt               => null
+        case (_, data.EmptyValue)                        => null
         case (x, _)                                      => throw new Exception(s"Not handled: $x")
       }
     }
@@ -66,7 +67,7 @@ object RecordWriter {
 
       case AttrF(None, ValueF(tpe, _)) =>
         d =>
-          extract(tpe, Fix.un[DataF](d), false) //todo: isOpt
+          extract(tpe, Fix.un[DataF](d))
 
       case AttrF(Some(avro), ObjF(fields, _)) =>
         Fix.un[DataF](_) match {
@@ -81,7 +82,9 @@ object RecordWriter {
             }
             generic.build()
 
-          case otherwise => ???
+          case otherwise =>
+            assert(false, "FWWWWWWWWWWWWWWWWWWWWWWWWW")
+            ???
         }
 
       case AttrF(Some(avro), RowF(columns, props)) =>
@@ -138,8 +141,64 @@ object RecordWriter {
     }
   }
 
+  def optional(algebra: Algebra[SchemaWithAvro, Data => Any]): Algebra[SchemaWithAvro, Data => Any] =
+    Algebra[SchemaWithAvro, Data => Any] {
+
+      // Avro uses unions to create optional/nullable values - unwrap them to correctly handle options
+      case AttrF(Some(avro), obj @ ObjF(_, _)) if avro.getType == AvroSchema.Type.UNION =>
+        assert(obj.properties.get(Optional.key).contains(true.prop), "Expected an optional object!")
+        assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional obj!")
+        assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
+        val unwarpped = avro.getTypes.get(0)
+
+        {
+          case data.empty => null
+          case otherwise  => algebra(AttrF(Some(unwarpped), obj))(otherwise)
+        }
+
+      case AttrF(Some(avro), row @ RowF(_, _)) if avro.getType == AvroSchema.Type.UNION =>
+        assert(row.properties.get(Optional.key).contains(true.prop), "Expected an optional row!")
+        assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional row!")
+        assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
+        val unwarpped = avro.getTypes.get(0)
+
+        {
+          case data.empty => null
+          case otherwise  => algebra(AttrF(Some(unwarpped), row))(otherwise)
+        }
+
+      case AttrF(Some(avro), indexed @ IndexedUnionF(alts, _))
+          if indexed.properties.get(Optional.key).contains(true.prop) =>
+        Fix.un[DataF](_) match {
+          case IndexedUnionValue(idx, value) =>
+            // a null was prepended to the union of alternatives
+            // this makes sure to account for that
+            val selected = avro.getTypes.asScala(idx + 1)
+            val generic = new Record(selected)
+            generic.put("schema", alts(idx)(value))
+            generic
+
+          case EmptyValue => null
+
+          case otherwise => ???
+        }
+
+      case other @ AttrF(_, schema) if schema.properties.get(Optional.key).contains(true.prop) => {
+        case data.empty => null
+        case otherwise  => algebra(other)(otherwise)
+      }
+
+      case otherwise => algebra(otherwise)
+    }
+
   def generateFor(schema: Schema): Data => GenericRecord = {
     // Functor for AttrF[...] comes from 'import higherkindness.droste.data.prelude._'
+    val annotated = scheme.ana(annotate).apply(schema)
+    val fn = scheme.cata(algebra).apply(annotated)
+    fn.asInstanceOf[Data => GenericRecord]
+  }
+
+  def define(algebra: Algebra[SchemaWithAvro, Data => Any]): Schema => Data => GenericRecord = { schema =>
     val annotated = scheme.ana(annotate).apply(schema)
     val fn = scheme.cata(algebra).apply(annotated)
     fn.asInstanceOf[Data => GenericRecord]
