@@ -86,7 +86,7 @@ object DataGen {
       for {
         name <- Gen.oneOf(alternatives.keySet.toSeq)
         v <- alternatives(name)
-      } yield data.union(name, v)
+      } yield data.named(name, v)
 
     case IndexedUnionF(alternatives, _) =>
       for {

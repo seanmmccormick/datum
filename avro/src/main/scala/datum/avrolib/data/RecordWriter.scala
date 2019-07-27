@@ -1,7 +1,7 @@
 package datum.avrolib.data
 import java.time.format.DateTimeFormatter
 
-import datum.avrolib.schemas.AvroSchemaWriter
+import datum.avrolib.data.errors.InvalidRecordOnWrite
 import datum.modifiers.Optional
 import datum.patterns.data
 import datum.patterns.data._
@@ -9,6 +9,7 @@ import datum.patterns.schemas._
 import datum.patterns.properties._
 import higherkindness.droste.data.{AttrF, Fix}
 import higherkindness.droste.data.prelude._
+import higherkindness.droste.syntax.all._
 import higherkindness.droste.{Algebra, Coalgebra, scheme}
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.GenericRecord
@@ -17,27 +18,23 @@ import org.apache.avro.generic.GenericRecordBuilder
 
 import scala.collection.JavaConverters._
 
-object RecordWriter {
+class RecordWriter(toAvro: Schema => AvroSchema) {
 
   type SchemaWithAvro[A] = AttrF[SchemaF, Option[AvroSchema], A]
 
   val annotate: Coalgebra[SchemaWithAvro, Schema] = Coalgebra { schema =>
-    Fix.un[SchemaF](schema) match {
+    schema.project match {
       case obj @ ObjF(_, _) =>
-        val avro = AvroSchemaWriter.write(schema)
-        AttrF(Some(avro), obj)
+        AttrF(Some(toAvro(schema)), obj)
 
       case obj @ RowF(_, _) =>
-        val avro = AvroSchemaWriter.write(schema)
-        AttrF(Some(avro), obj)
+        AttrF(Some(toAvro(schema)), obj)
 
       case indexed @ IndexedUnionF(_, _) =>
-        val avro = AvroSchemaWriter.write(schema)
-        AttrF(Some(avro), indexed)
+        AttrF(Some(toAvro(schema)), indexed)
 
       case named @ NamedUnionF(_, _) =>
-        val avro = AvroSchemaWriter.write(schema)
-        AttrF(Some(avro), named)
+        AttrF(Some(toAvro(schema)), named)
 
       case otherwise => AttrF(None, otherwise)
     }
@@ -47,19 +44,21 @@ object RecordWriter {
 
     def extract(tpe: Type, d: DataF[Data]): Any = {
       (tpe, d) match {
-        case (IntType, data.IntValue(v))                 => v
-        case (TextType, data.TextValue(v))               => v
-        case (LongType, data.LongValue(v))               => v
-        case (BooleanType, data.BooleanValue(v))         => v
-        case (DoubleType, data.DoubleValue(v))           => v
-        case (FloatType, data.FloatValue(v))             => v
-        case (DateType, data.DateValue(v))               => v.format(DateTimeFormatter.ISO_LOCAL_DATE)
-        case (TimestampType, data.TimestampValue(v))     => v.getEpochSecond * 1000 //expects millis
-        case (DateTimeType, data.DateTimeValue(v))       => v.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        case (ZonedDateTimeType, data.ZonedTimeValue(v)) => v.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)
-        case (BytesType, data.BytesValue(v))             => java.nio.ByteBuffer.wrap(v)
-        case (_, data.EmptyValue)                        => null
-        case (x, _)                                      => throw new Exception(s"Not handled: $x")
+        case (IntType, data.IntValue(v))                     => v
+        case (TextType, data.TextValue(v))                   => v
+        case (LongType, data.LongValue(v))                   => v
+        case (BooleanType, data.BooleanValue(v))             => v
+        case (DoubleType, data.DoubleValue(v))               => v
+        case (FloatType, data.FloatValue(v))                 => v
+        case (DateType, data.DateValue(v))                   => v.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        case (TimestampType, data.TimestampValue(v))         => v.getEpochSecond * 1000 //expects millis
+        case (DateTimeType, data.LocalDateTimeValue(v))      => v.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        case (ZonedDateTimeType, data.ZonedDateTimeValue(v)) => v.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)
+        case (BytesType, data.BytesValue(v))                 => java.nio.ByteBuffer.wrap(v)
+        case (_, data.EmptyValue)                            => null
+        case (typ, record) =>
+          val msg = s"Expected a ${Type.asString(typ)} but got a ${data.typeOf(record.fix)}"
+          throw InvalidRecordOnWrite(msg)
       }
     }
 
@@ -70,7 +69,7 @@ object RecordWriter {
           extract(tpe, Fix.un[DataF](d))
 
       case AttrF(Some(avro), ObjF(fields, _)) =>
-        Fix.un[DataF](_) match {
+        _.project match {
           case ObjValue(values) =>
             val generic = new GenericRecordBuilder(avro)
 
@@ -83,13 +82,14 @@ object RecordWriter {
             generic.build()
 
           case otherwise =>
-            assert(false, "FWWWWWWWWWWWWWWWWWWWWWWWWW")
-            ???
+            val msg = s"Expected an obj but got a ${data.typeOf(otherwise.fix)}"
+            throw InvalidRecordOnWrite(msg)
         }
 
-      case AttrF(Some(avro), RowF(columns, props)) =>
-        Fix.un[DataF](_) match {
+      case AttrF(Some(avro), RowF(columns, _)) =>
+        _.project match {
           case RowValue(values) =>
+            assert(!avro.isUnion, "Unexpected union type while handling row")
             val generic = new GenericRecordBuilder(avro)
             val records = columns.zip(values).map {
               case (col, v) =>
@@ -101,28 +101,34 @@ object RecordWriter {
             }
             generic.build()
 
-          case otherwise => ???
+          case otherwise =>
+            val msg = s"Expected a row but got a ${data.typeOf(otherwise.fix)}"
+            throw InvalidRecordOnWrite(msg)
         }
 
       case AttrF(Some(avro), IndexedUnionF(alts, _)) =>
-        Fix.un[DataF](_) match {
+        _.project match {
           case IndexedUnionValue(idx, value) =>
             val selected = avro.getTypes.asScala(idx)
             val generic = new Record(selected)
             generic.put("schema", alts(idx)(value))
             generic
-          case otherwise => ???
+          case otherwise =>
+            val msg = s"Expected an indexed-union row but got a ${data.typeOf(otherwise.fix)}"
+            throw InvalidRecordOnWrite(msg)
         }
 
       case AttrF(None, ArrayF(conforms, _)) =>
-        Fix.un[DataF](_) match {
+        _.project match {
           case RowValue(values) =>
             values.map(conforms).asJava
-          case otherwise => ???
+          case otherwise =>
+            val msg = s"Expected an array but got a ${data.typeOf(otherwise.fix)}"
+            throw InvalidRecordOnWrite(msg)
         }
 
       case AttrF(Some(avro), NamedUnionF(alts, _)) =>
-        Fix.un[DataF](_) match {
+        _.project match {
           case NamedUnionValue(selection, value) =>
             // NamedUnion record must be written with the original name set as a prop
             val selected = avro.getTypes.asScala.find { s =>
@@ -132,12 +138,14 @@ object RecordWriter {
             generic.put("schema", alts(selection)(value))
             generic
 
-          case otherwise => ???
+          case otherwise =>
+            val msg = s"Expected a named-union but got a ${data.typeOf(otherwise.fix)}"
+            throw InvalidRecordOnWrite(msg)
         }
 
-      case AttrF(_, otherwise) =>
-        assert(false, s"TODO: ${pprint.apply(otherwise)}")
-        ???
+      case AttrF(_, _) =>
+        val msg = s"Invalid schema when writing record!"
+        throw InvalidRecordOnWrite(msg)
     }
   }
 
@@ -149,22 +157,22 @@ object RecordWriter {
         assert(obj.properties.get(Optional.key).contains(true.prop), "Expected an optional object!")
         assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional obj!")
         assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
-        val unwarpped = avro.getTypes.get(0)
+        val unwrapped = avro.getTypes.get(0)
 
         {
           case data.empty => null
-          case otherwise  => algebra(AttrF(Some(unwarpped), obj))(otherwise)
+          case otherwise  => algebra(AttrF(Some(unwrapped), obj))(otherwise)
         }
 
       case AttrF(Some(avro), row @ RowF(_, _)) if avro.getType == AvroSchema.Type.UNION =>
         assert(row.properties.get(Optional.key).contains(true.prop), "Expected an optional row!")
         assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional row!")
         assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
-        val unwarpped = avro.getTypes.get(0)
+        val unwrapped = avro.getTypes.get(0)
 
         {
           case data.empty => null
-          case otherwise  => algebra(AttrF(Some(unwarpped), row))(otherwise)
+          case otherwise  => algebra(AttrF(Some(unwrapped), row))(otherwise)
         }
 
       case AttrF(Some(avro), indexed @ IndexedUnionF(alts, _))
@@ -180,7 +188,7 @@ object RecordWriter {
 
           case EmptyValue => null
 
-          case otherwise => ???
+          case otherwise => algebra(AttrF(Some(avro), indexed))(otherwise.fix)
         }
 
       case other @ AttrF(_, schema) if schema.properties.get(Optional.key).contains(true.prop) => {

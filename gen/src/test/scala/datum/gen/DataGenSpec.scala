@@ -2,11 +2,10 @@ package datum.gen
 import datum.algebras.corresponds.Corresponds
 import datum.gen.algebras.DataGen
 import datum.modifiers.Optional
-import datum.patterns.data.{BytesValue, Data, DataF, ZonedTimeValue}
+import datum.patterns.data.{BytesValue, Data, DataF, ZonedDateTimeValue}
 import datum.patterns.{data, schemas}
 import datum.patterns.schemas._
 import higherkindness.droste.data.Fix
-import higherkindness.droste.syntax.project._
 import org.scalacheck.Arbitrary
 import org.scalatest.{Matchers, WordSpec}
 import org.scalacheck.Prop._
@@ -68,8 +67,8 @@ class DataGenSpec extends WordSpec with Checkers with Matchers {
       check {
         forAll { data: Data =>
           Fix.un[DataF](data) match {
-            case ZonedTimeValue(_) => true
-            case _                 => false
+            case ZonedDateTimeValue(_) => true
+            case _                     => false
           }
         }
       }

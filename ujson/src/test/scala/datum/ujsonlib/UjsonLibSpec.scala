@@ -63,7 +63,7 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       )
       val toJs = WriteJs.define()(schema)
       val fromJs = reader.define(schema)
-      val check = d.union("baz", d.row(d.long(1), d.long(2)))
+      val check = d.named("baz", d.row(d.long(1), d.long(2)))
 
       fromJs(toJs(check)) shouldBe Right(check)
     }
@@ -75,7 +75,7 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       )
       val toJs = WriteJs.define()(schema)
       val fromJs = reader.define(schema)
-      val check = d.union("bar", d.obj("b" -> d.boolean(true)))
+      val check = d.named("bar", d.obj("b" -> d.boolean(true)))
 
       fromJs(toJs(check)) shouldBe Right(check)
     }

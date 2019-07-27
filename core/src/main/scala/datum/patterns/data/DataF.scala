@@ -37,8 +37,8 @@ final case class BytesValue(value: Array[Byte]) extends DataF[Nothing] {
 
 final case class DateValue(value: LocalDate) extends DataF[Nothing]
 final case class TimestampValue(value: Instant) extends DataF[Nothing]
-final case class DateTimeValue(value: LocalDateTime) extends DataF[Nothing]
-final case class ZonedTimeValue(value: ZonedDateTime) extends DataF[Nothing]
+final case class LocalDateTimeValue(value: LocalDateTime) extends DataF[Nothing]
+final case class ZonedDateTimeValue(value: ZonedDateTime) extends DataF[Nothing]
 case object EmptyValue extends DataF[Nothing]
 
 object DataF {
@@ -59,18 +59,18 @@ object DataF {
         case IndexedUnionValue(idx, a) =>
           G.map(f(a))(b => IndexedUnionValue(idx, b))
 
-        case EmptyValue            => G.pure(EmptyValue)
-        case v @ TextValue(_)      => G.pure(v)
-        case v @ BooleanValue(_)   => G.pure(v)
-        case v @ LongValue(_)      => G.pure(v)
-        case v @ IntValue(_)       => G.pure(v)
-        case v @ DoubleValue(_)    => G.pure(v)
-        case v @ FloatValue(_)     => G.pure(v)
-        case v @ BytesValue(_)     => G.pure(v)
-        case v @ DateValue(_)      => G.pure(v)
-        case v @ TimestampValue(_) => G.pure(v)
-        case v @ DateTimeValue(_)  => G.pure(v)
-        case v @ ZonedTimeValue(_) => G.pure(v)
+        case EmptyValue                => G.pure(EmptyValue)
+        case v @ TextValue(_)          => G.pure(v)
+        case v @ BooleanValue(_)       => G.pure(v)
+        case v @ LongValue(_)          => G.pure(v)
+        case v @ IntValue(_)           => G.pure(v)
+        case v @ DoubleValue(_)        => G.pure(v)
+        case v @ FloatValue(_)         => G.pure(v)
+        case v @ BytesValue(_)         => G.pure(v)
+        case v @ DateValue(_)          => G.pure(v)
+        case v @ TimestampValue(_)     => G.pure(v)
+        case v @ LocalDateTimeValue(_) => G.pure(v)
+        case v @ ZonedDateTimeValue(_) => G.pure(v)
       }
     }
   }

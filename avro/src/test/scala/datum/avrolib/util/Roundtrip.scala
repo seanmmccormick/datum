@@ -13,7 +13,10 @@ object Roundtrip {
 
   def apply(schema: Schema, data: List[Data]): List[Data] = {
     val avro = AvroSchemaWriter.write(schema)
-    val toGenericRecord = RecordWriter.define(RecordWriter.optional(RecordWriter.algebra))(schema)
+    assert(!avro.isUnion, "Top level schema can't be a union (ie optional)")
+
+    val writer = new RecordWriter(AvroSchemaWriter.write)
+    val toGenericRecord = writer.define(writer.optional(writer.algebra))(schema)
     val fromGenericRecord = RecordReader.generateFor(schema)
 
     val temp = java.io.File.createTempFile("roundtrip", ".avro")

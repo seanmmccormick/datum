@@ -60,7 +60,7 @@ object AvroSchemaWriter {
           val avro = fields
             .foldLeft(SchemaBuilder.record("r%x".format(fingerprint)).fields()) {
               case (acc, (k, v)) =>
-                val (name, modified) = uniqueName(k, 0, seen)
+                val (name, modified) = uniqueName(k, seen)
                 if (modified) {
                   safeAddProp(v, ORIGINAL_NAME_KEY, k)
                 }
@@ -80,11 +80,12 @@ object AvroSchemaWriter {
           (registry, registry(fingerprint))
         } else {
           val seen = mutable.Map.empty[String, Int].withDefaultValue(0)
-          val avro = elements.zipWithIndex
+          val avro = elements
             .foldLeft(SchemaBuilder.record("r%x".format(fingerprint)).fields()) {
-              case (acc, (col, idx)) =>
+              case (acc, col) =>
                 val original = col.header.getOrElse("")
-                val (name, modified) = uniqueName(original, idx, seen)
+                val (name, modified) = uniqueName(original, seen)
+
                 if (modified) {
                   safeAddProp(col.value, ORIGINAL_NAME_KEY, original)
                 }
@@ -190,7 +191,7 @@ object AvroSchemaWriter {
     var modified = false
 
     inp.iterator.foreach {
-      case c if c.isLetterOrDigit =>
+      case c if c.isLetterOrDigit || c == '_' =>
         builder.append(c)
 
       case _ =>
@@ -204,7 +205,7 @@ object AvroSchemaWriter {
     else (result, modified)
   }
 
-  private def uniqueName(original: String, idx: Int, seen: mutable.Map[String, Int]): (String, Boolean) = {
+  private def uniqueName(original: String, seen: mutable.Map[String, Int]): (String, Boolean) = {
     def next(check: String): String = {
       val result =
         if (seen(check) == 0) check
@@ -227,7 +228,19 @@ object AvroSchemaWriter {
   // (datum) properties around
   private def safeAddProp(field: AvroSchema, key: String, prop: Any): AvroSchema = {
     if (field.isUnion) {
-      field.getTypes.asScala.last.addProp(key, prop)
+      // This is really annoying, union types can come from both a union based schema
+      // OR from optional values. This unfortunately special cases detecting an optional
+      // value, which is represented as a union of the original schema and null
+      //
+      // I think to avoid this, we would have to go to .para instead of .cata
+      val types = field.getTypes
+      if (types.size() == 2 && types.get(1).isNullable) {
+        safeAddProp(types.get(0), key, prop)
+      } else if (types.size() == 2 && types.get(0).isNullable) {
+        safeAddProp(types.get(1), key, prop)
+      } else {
+        types.get(types.size() - 1).addProp(key, prop)
+      }
     } else {
       field.addProp(key, prop)
     }
@@ -242,7 +255,7 @@ object AvroSchemaWriter {
     AlgebraM[Registry, SchemaF, AvroSchema] {
       case x if x.properties.get(Optional.key).contains(true.prop) =>
         algebra(x).map { generic =>
-          if(!generic.isUnion) {
+          if (!generic.isUnion) {
             SchemaBuilder.nullable().`type`(generic)
           } else {
             val alts = generic.getTypes.asScala
@@ -258,5 +271,4 @@ object AvroSchemaWriter {
     schema =>
       fn(schema).run(Map.empty).value._2
   }
-
 }

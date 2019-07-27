@@ -108,7 +108,7 @@ class JsReader[M[_]]()(implicit M: MonadError[M, Throwable]) {
       case ujson.Obj(fields) =>
         val selection = fields.keySet.head
         alts(selection)(fields(selection)).map { res =>
-          d.union(selection, res)
+          d.named(selection, res)
         }
       case _ => M.raiseError(SchemaMismatchException("Invalid Union Value"))
     }

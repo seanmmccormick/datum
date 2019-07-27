@@ -8,7 +8,7 @@ import datum.patterns.schemas._
 import higherkindness.droste.{Algebra, scheme}
 import higherkindness.droste.data.Fix
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.Prop.forAll
+import org.scalacheck.Prop.{forAll, BooleanOperators}
 import org.scalatest.{Assertion, Matchers, WordSpec}
 import org.scalatestplus.scalacheck.Checkers
 
@@ -28,7 +28,7 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
           case EmptyValue =>
             data.obj(fields.mapValues(_.apply(data.empty)))
         }
-      case otherwise => identity
+      case _ => identity
     }
   }
 
@@ -42,6 +42,7 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
       } yield data
     }
     val norm = normalize(schema)
+    println(datum.avrolib.schemas.AvroSchemaWriter.write(schema))
     check {
       forAll { data: List[Data] =>
         val results = Roundtrip(schema, data)
@@ -147,6 +148,41 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
         forAll { generated: (Schema, List[Data]) =>
           val (schema, records) = generated
           Roundtrip(schema, records) == records
+        }
+      }
+    }
+
+    "handle optional values with renaming of fields occurring" in {
+      val schema = schemas.row()(
+        schemas.col("_1", schemas.value(TextType, Optional.enable)),
+        schemas.col("2", schemas.value(BooleanType, Optional.enable))
+      )
+      assertRoundtrip(schema, optional = true)
+    }
+
+    "roundtrip arbitrary optional schemas and data" in {
+      val generator = SchemaGen.optional(SchemaGen.simple.coalgebra)
+      val initial = Gen.oneOf(SchemaGen.AnObj, SchemaGen.ARow).map(SchemaGen.Seed(_, 5))
+
+      implicit val arb: Arbitrary[(Schema, List[Data])] = Arbitrary {
+        for {
+          seed <- initial
+          schema <- SchemaGen.define(generator)(seed)
+          data <- Gen.nonEmptyListOf(DataGen.define(DataGen.optional(DataGen.algebra))(schema))
+        } yield (schema, data)
+      }
+
+      check {
+        forAll { generated: (Schema, List[Data]) =>
+          // Due to the way avro encodes records, the top level record can't be optional
+          !generated._1.properties.contains(Optional.key) ==> {
+            val (schema, records) = generated
+            val norm = normalize(schema)
+            val results = Roundtrip(schema, records)
+            records.zip(results).forall { x =>
+              norm(x._1) == norm(x._2)
+            }
+          }
         }
       }
     }

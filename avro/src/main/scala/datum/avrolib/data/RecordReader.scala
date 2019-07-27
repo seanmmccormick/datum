@@ -3,11 +3,9 @@ package datum.avrolib.data
 import java.time.{Instant, LocalDate, LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
-import datum.modifiers.Optional
 import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
-import datum.patterns.properties._
 import higherkindness.droste.{Algebra, scheme}
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.util.Utf8
@@ -91,7 +89,7 @@ object RecordReader {
       }
 
       case ArrayF(conforms, _) => {
-        case array: GenericData.Array[AnyRef] =>
+        case array: GenericData.Array[AnyRef @unchecked] =>
           val values = array.iterator().asScala.map[Data](conforms)
           data.array(values.toVector)
         case null => data.empty
@@ -101,19 +99,18 @@ object RecordReader {
       case NamedUnionF(alts, _) => {
         case generic: GenericRecord =>
           val name = generic.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
-          data.union(name, alts(name)(generic.get("schema")))
+          data.named(name, alts(name)(generic.get("schema")))
 
         case null => data.empty
 
         // case _ => ???
       }
 
-      case IndexedUnionF(alts, props) => {
+      case IndexedUnionF(alts, _) => {
         case generic: GenericRecord =>
-          val offset = if (props.get(Optional.key).contains(true.prop)) 1 else 0
           val idx = generic.getSchema.getObjectProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY).asInstanceOf[Int]
-
           data.indexed(idx, alts(idx)(generic.get("schema")))
+
         case null => data.empty
 
         //   case _ => ???

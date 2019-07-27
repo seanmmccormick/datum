@@ -2,6 +2,7 @@ package datum.avrolib.data
 
 import java.time._
 
+import datum.avrolib.schemas.AvroSchemaWriter
 import datum.avrolib.util.TestSchemas
 import datum.modifiers.Optional
 import datum.patterns.{data => d}
@@ -12,6 +13,8 @@ import org.scalatestplus.scalacheck.Checkers
 
 class RecordWriterSpec extends WordSpec with Checkers with Matchers {
 
+  val recordWriter = new RecordWriter(AvroSchemaWriter.write)
+
   "Avrolib RecordWriter" should {
     "encode data matching a simple schema" in {
       val simple = schemas.obj()(
@@ -19,7 +22,7 @@ class RecordWriterSpec extends WordSpec with Checkers with Matchers {
         "bar" -> schemas.value(BooleanType, Optional.enable)
       )
       val r1 = d.obj("foo" -> d.integer(10), "bar" -> d.boolean(true))
-      val toGenericRecord = RecordWriter.generateFor(simple)
+      val toGenericRecord = recordWriter.generateFor(simple)
       val generic = toGenericRecord(r1)
 
       generic.get("foo") shouldBe 10
@@ -27,7 +30,7 @@ class RecordWriterSpec extends WordSpec with Checkers with Matchers {
     }
 
     "encode all value types" in {
-      val toGenericRecord = RecordWriter.generateFor(TestSchemas.types)
+      val toGenericRecord = recordWriter.generateFor(TestSchemas.types)
 
       val r1 = d.obj(
         "int" -> d.integer(0),
@@ -68,7 +71,7 @@ class RecordWriterSpec extends WordSpec with Checkers with Matchers {
         "bar" -> schemas.value(BooleanType, Optional.enable)
       )
       val r1 = d.obj("foo" -> d.integer(10), "bar" -> d.empty)
-      val toGenericRecord = RecordWriter.define(RecordWriter.optional(RecordWriter.algebra))(simple)
+      val toGenericRecord = recordWriter.define(recordWriter.optional(recordWriter.algebra))(simple)
 
       val generic = toGenericRecord(r1)
       generic.get("bar") shouldBe null
