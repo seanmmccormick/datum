@@ -3,6 +3,7 @@ package datum.avrolib.data
 import java.time.{Instant, LocalDate, LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
+import datum.avrolib.data.errors.InvalidRecordOnRead
 import datum.patterns.data
 import datum.patterns.data.Data
 import datum.patterns.schemas._
@@ -49,10 +50,7 @@ object RecordReader {
           v.get(copy)
           data.bytes(copy)
 
-        case (_, other) =>
-          println(s"FAILED TO MATCH: $other")
-          println(other.getClass)
-          ???
+        case (typ, other) => throw InvalidRecordOnRead(s"Expected a ${Type.asString(typ)} but got ${other.getClass}")
       }
     }
 
@@ -74,6 +72,8 @@ object RecordReader {
           data.obj(builder.result())
 
         case null => data.empty
+
+        case other => throw InvalidRecordOnRead(s"Expected an obj but got ${other.getClass}")
       }
 
       case RowF(columns, _) => {
@@ -86,6 +86,8 @@ object RecordReader {
           data.row(values)
 
         case null => data.empty
+
+        case other => throw InvalidRecordOnRead(s"Expected a row but got ${other.getClass}")
       }
 
       case ArrayF(conforms, _) => {
@@ -93,7 +95,8 @@ object RecordReader {
           val values = array.iterator().asScala.map[Data](conforms)
           data.array(values.toVector)
         case null => data.empty
-        // case _    => ???
+
+        case other => throw InvalidRecordOnRead(s"Expected an array but got ${other.getClass}")
       }
 
       case NamedUnionF(alts, _) => {
@@ -103,7 +106,7 @@ object RecordReader {
 
         case null => data.empty
 
-        // case _ => ???
+        case other => throw InvalidRecordOnRead(s"Expected a union but got ${other.getClass}")
       }
 
       case IndexedUnionF(alts, _) => {
@@ -113,12 +116,8 @@ object RecordReader {
 
         case null => data.empty
 
-        //   case _ => ???
+        case other => throw InvalidRecordOnRead(s"Expected a union but got ${other.getClass}")
       }
-
-      case otherwise =>
-        assert(false, s"TODOOO: READ RECOOORD: $otherwise")
-        ???
     }
   }
 
