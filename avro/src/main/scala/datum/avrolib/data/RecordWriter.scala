@@ -30,10 +30,7 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
       case obj @ RowF(_, _) =>
         AttrF(Some(toAvro(schema)), obj)
 
-      case indexed @ IndexedUnionF(_, _) =>
-        AttrF(Some(toAvro(schema)), indexed)
-
-      case named @ NamedUnionF(_, _) =>
+      case named @ UnionF(_, _) =>
         AttrF(Some(toAvro(schema)), named)
 
       case otherwise => AttrF(None, otherwise)
@@ -106,18 +103,6 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
             throw InvalidRecordOnWrite(msg)
         }
 
-      case AttrF(Some(avro), IndexedUnionF(alts, _)) =>
-        _.project match {
-          case IndexedUnionValue(idx, value) =>
-            val selected = avro.getTypes.asScala(idx)
-            val generic = new Record(selected)
-            generic.put("schema", alts(idx)(value))
-            generic
-          case otherwise =>
-            val msg = s"Expected an indexed-union row but got a ${data.typeOf(otherwise.fix)}"
-            throw InvalidRecordOnWrite(msg)
-        }
-
       case AttrF(None, ArrayF(conforms, _)) =>
         _.project match {
           case RowValue(values) =>
@@ -127,7 +112,7 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
             throw InvalidRecordOnWrite(msg)
         }
 
-      case AttrF(Some(avro), NamedUnionF(alts, _)) =>
+      case AttrF(Some(avro), UnionF(alts, _)) =>
         _.project match {
           case NamedUnionValue(selection, value) =>
             // NamedUnion record must be written with the original name set as a prop
@@ -173,22 +158,6 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
         {
           case data.empty => null
           case otherwise  => algebra(AttrF(Some(unwrapped), row))(otherwise)
-        }
-
-      case AttrF(Some(avro), indexed @ IndexedUnionF(alts, _))
-          if indexed.properties.get(Optional.key).contains(true.prop) =>
-        Fix.un[DataF](_) match {
-          case IndexedUnionValue(idx, value) =>
-            // a null was prepended to the union of alternatives
-            // this makes sure to account for that
-            val selected = avro.getTypes.asScala(idx + 1)
-            val generic = new Record(selected)
-            generic.put("schema", alts(idx)(value))
-            generic
-
-          case EmptyValue => null
-
-          case otherwise => algebra(AttrF(Some(avro), indexed))(otherwise.fix)
         }
 
       case other @ AttrF(_, schema) if schema.properties.get(Optional.key).contains(true.prop) => {

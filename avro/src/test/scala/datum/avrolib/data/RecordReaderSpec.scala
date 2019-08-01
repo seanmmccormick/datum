@@ -42,7 +42,7 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
       } yield data
     }
     val norm = normalize(schema)
-    println(datum.avrolib.schemas.AvroSchemaWriter.write(schema))
+
     check {
       forAll { data: List[Data] =>
         val results = Roundtrip(schema, data)
@@ -55,9 +55,8 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
 
   "Avrolib RecordReader" should {
 
-    "encode data for an indexed union" in {
+    "encode data for an union" in {
       val schema = schemas.obj()(
-        "test" -> schemas.indexed()(schemas.value(IntType), schemas.value(IntType)),
         "other" -> schemas.union()("a" -> schemas.value(BooleanType), "" -> schemas.value(TextType))
       )
       assertRoundtrip(schema)
@@ -117,16 +116,6 @@ class RecordReaderSpec extends WordSpec with Checkers with Matchers {
         "foo" -> schemas.union(Optional.enable)(
           "a" -> schemas.value(IntType, Optional.enable),
           "b" -> schemas.value(IntType, Optional.enable)
-        )
-      )
-      assertRoundtrip(schema, optional = true)
-    }
-
-    "roundtrip optional indexed union" in {
-      val schema = schemas.obj()(
-        "foo" -> schemas.indexed(Optional.enable)(
-          schemas.value(IntType, Optional.enable),
-          schemas.value(IntType, Optional.enable)
         )
       )
       assertRoundtrip(schema, optional = true)

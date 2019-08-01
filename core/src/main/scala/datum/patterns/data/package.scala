@@ -37,12 +37,8 @@ package object data {
 
   def array(elements: Data*): Data = row(elements: _*)
 
-  def named(selection: String, element: Data): Data = {
+  def union(selection: String, element: Data): Data = {
     Fix(NamedUnionValue(selection, element))
-  }
-
-  def indexed(idx: Int, element: Data): Data = {
-    Fix(IndexedUnionValue(idx, element))
   }
 
   def text(value: String): Data = {

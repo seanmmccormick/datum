@@ -63,7 +63,7 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       )
       val toJs = WriteJs.define()(schema)
       val fromJs = reader.define(schema)
-      val check = d.named("baz", d.row(d.long(1), d.long(2)))
+      val check = d.union("baz", d.row(d.long(1), d.long(2)))
 
       fromJs(toJs(check)) shouldBe Right(check)
     }
@@ -75,24 +75,9 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       )
       val toJs = WriteJs.define()(schema)
       val fromJs = reader.define(schema)
-      val check = d.named("bar", d.obj("b" -> d.boolean(true)))
+      val check = d.union("bar", d.obj("b" -> d.boolean(true)))
 
       fromJs(toJs(check)) shouldBe Right(check)
-    }
-
-    "indexed should work with empty array" in {
-      val schema = s.indexed()(
-        s.value(BooleanType),
-        s.array()(s.value(BooleanType))
-      )
-      val toJs = WriteJs.define()(schema)
-      val fromJs = reader.define(schema)
-
-      val c0 = d.indexed(0, d.boolean(true))
-      val c1 = d.indexed(1, d.row())
-
-      fromJs(toJs(c0)) shouldBe Right(c0)
-      fromJs(toJs(c1)) shouldBe Right(c1)
     }
 
     "roundtrip binary data" in {
@@ -112,7 +97,7 @@ class UjsonLibSpec extends WordSpec with Checkers with Matchers {
       val fromJs = reader.define(schema)
       val fromJsOpt = reader.defineUsing(reader.optional(reader.default))(schema)
 
-      fromJs(ujson.Obj()) shouldBe a[Left[Throwable, Data]]
+      fromJs(ujson.Obj()) shouldBe a[Left[_, _]]
       fromJsOpt(ujson.Obj()) shouldBe Right(d.obj("a" -> d.empty, "b" -> d.empty))
     }
 

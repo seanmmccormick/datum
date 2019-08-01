@@ -1,10 +1,8 @@
 package datum.avrolib.schemas
 import datum.gen.algebras.SchemaGen
-import datum.gen.algebras.SchemaGen.Seed
 import datum.modifiers.Optional
 import datum.patterns.schemas
 import datum.patterns.schemas._
-import datum.patterns.properties._
 import org.apache.avro.{Schema => AvroSchema}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
@@ -33,14 +31,8 @@ class AvroSchemaWriterSpec extends WordSpec with Checkers with Matchers {
       avro.getField("date").schema().getProp(RECORD_TYPE_KEY) shouldBe "date"
     }
 
-    "encode named unions" in {
+    "encode unions" in {
       val schema = schemas.union()("foo" -> schemas.value(IntType), "bar" -> schemas.value(IntType))
-      val avro = AvroSchemaWriter.write(schema)
-      avro.getType shouldBe AvroSchema.Type.UNION
-    }
-
-    "encode indexed unions" in {
-      val schema = schemas.indexed()(schemas.value(IntType), schemas.value(IntType))
       val avro = AvroSchemaWriter.write(schema)
       avro.getType shouldBe AvroSchema.Type.UNION
     }

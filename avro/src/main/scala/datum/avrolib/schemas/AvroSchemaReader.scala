@@ -86,13 +86,7 @@ object AvroSchemaReader {
               }
               alts += (original -> alt.getField("schema").schema())
             }
-            NamedUnionF(alts.result(), extractProps(propertyRecord))
-
-          case "indexed" =>
-            val alts = alternatives.map { alt =>
-              alt.getField("schema").schema()
-            }
-            IndexedUnionF(alts.toVector, extractProps(propertyRecord))
+            UnionF(alts.result(), extractProps(propertyRecord))
         }
 
       case todo => ???

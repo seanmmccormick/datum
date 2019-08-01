@@ -66,7 +66,7 @@ class AvroSchemaReaderSpec extends WordSpec with Checkers with Matchers {
     "read rows with unnamed columns that are unions" in {
       val schema = schemas.row()(
         Column(schemas.union()("" -> schemas.value(IntType))),
-        Column(schemas.indexed()(schemas.value(IntType)))
+        Column(schemas.union()("Unnamed" -> schemas.value(IntType)))
       )
       val avro = AvroSchemaWriter.write(schema)
       val read = AvroSchemaReader.read(avro)

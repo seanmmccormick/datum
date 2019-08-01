@@ -108,7 +108,7 @@ object AvroSchemaWriter {
         avro
       }
 
-    case NamedUnionF(alts, props) =>
+    case UnionF(alts, props) =>
       val fingerprint = alts.hashCode()
       union(fingerprint, props, "named") { buffer =>
         alts.zipWithIndex.foreach {
@@ -122,26 +122,6 @@ object AvroSchemaWriter {
                 .noDefault()
                 .endRecord()
             record.addProp(ORIGINAL_NAME_KEY, k)
-            buffer.append(record)
-        }
-      }
-
-    case IndexedUnionF(alts, props) =>
-      val fingerprint = alts.hashCode()
-      union(fingerprint, props, "indexed") { buffer =>
-        alts.zipWithIndex.foreach {
-          case (v, idx) =>
-            val record =
-              SchemaBuilder
-                .record("r%x_%d".format(fingerprint, idx))
-                .fields()
-                .name("schema")
-                .`type`(v)
-                .noDefault()
-                .endRecord()
-
-            // (ab)use the ORIGINAL_NAME_KEY to store the explicit index as a prop
-            record.addProp(ORIGINAL_NAME_KEY, idx)
             buffer.append(record)
         }
       }

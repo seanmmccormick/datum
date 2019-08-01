@@ -99,20 +99,10 @@ object RecordReader {
         case other => throw InvalidRecordOnRead(s"Expected an array but got ${other.getClass}")
       }
 
-      case NamedUnionF(alts, _) => {
+      case UnionF(alts, _) => {
         case generic: GenericRecord =>
           val name = generic.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
-          data.named(name, alts(name)(generic.get("schema")))
-
-        case null => data.empty
-
-        case other => throw InvalidRecordOnRead(s"Expected a union but got ${other.getClass}")
-      }
-
-      case IndexedUnionF(alts, _) => {
-        case generic: GenericRecord =>
-          val idx = generic.getSchema.getObjectProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY).asInstanceOf[Int]
-          data.indexed(idx, alts(idx)(generic.get("schema")))
+          data.union(name, alts(name)(generic.get("schema")))
 
         case null => data.empty
 
