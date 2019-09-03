@@ -40,7 +40,7 @@ object Corresponds {
 
     case UnionF(alternatives, _) =>
       Fix.un[DataF](_) match {
-        case NamedUnionValue(selected, v) =>
+        case UnionValue(selected, v) =>
           alternatives.get(selected).exists(_.apply(v))
         case _ => false
       }
@@ -60,8 +60,8 @@ object Corresponds {
     case ValueF(BooleanType, _)       => matchValue { case BooleanValue(_)   => true }
     case ValueF(DateType, _)          => matchValue { case DateValue(_)      => true }
     case ValueF(TimestampType, _)     => matchValue { case TimestampValue(_) => true }
-    case ValueF(DateTimeType, _)      => matchValue { case DateTimeValue(_)  => true }
-    case ValueF(ZonedDateTimeType, _) => matchValue { case ZonedTimeValue(_) => true }
+    case ValueF(DateTimeType, _)      => matchValue { case LocalDateTimeValue(_)  => true }
+    case ValueF(ZonedDateTimeType, _) => matchValue { case ZonedDateTimeValue(_) => true }
     case ValueF(BytesType, _)         => matchValue { case BytesValue(_)     => true }
 
   }

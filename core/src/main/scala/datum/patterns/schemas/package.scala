@@ -8,8 +8,12 @@ import scala.collection.immutable.SortedMap
 package object schemas {
   type PropertyMap = Map[String, Property]
 
-  
   type Schema = Fix[SchemaF]
+
+  implicit class SchemaOps(val schema: Schema) extends AnyVal {
+    def project: SchemaF[Schema] = Fix.un[SchemaF](schema)
+    def properties: PropertyMap = project.properties
+  }
 
   def obj(properties: PropertyMap = Map.empty)(fields: (String, Schema)*): Schema = {
     Fix(ObjF(SortedMap(fields: _*), properties))

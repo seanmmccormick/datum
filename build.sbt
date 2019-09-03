@@ -67,6 +67,18 @@ lazy val gen = (project in file("gen"))
   .settings(sonatypePublish)
   .dependsOn(core)
 
+lazy val avro = (project in file("avro"))
+  .settings(commonSettings)
+  .settings(
+    name := "datum-avro",
+    libraryDependencies ++= Seq(
+      "org.apache.avro" % "avro" % "1.9.0",
+      "org.xerial.snappy" % "snappy-java" % "1.1.7.3" % Test
+    )
+  )
+  .settings(sonatypePublish)
+  .dependsOn(core, gen % Test)
+
 // sub project so that test code can depend on both core and gen
 // otherwise there is a circular dependency
 lazy val testCore = (project in file("test-core"))
@@ -96,8 +108,7 @@ val sonatypePublish = Seq(
   pomIncludeRepository := Function.const(false),
   homepage := Some(url("https://github.com/Voltir/datum")),
   sonatypeProfileName := "io.github.voltir",
-  licenses += ("MIT license", url(
-    "http://www.opensource.org/licenses/mit-license.php")),
+  licenses += ("MIT license", url("http://www.opensource.org/licenses/mit-license.php")),
   scmInfo := Some(
     ScmInfo(
       url("https://github.com/Voltir/datum"),

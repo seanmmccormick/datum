@@ -29,9 +29,9 @@ object WriteJs {
         ujson.Str(v.format(DateTimeFormatter.ISO_LOCAL_DATE))
       case (TimestampType, data.TimestampValue(v)) =>
         ujson.Str(v.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
-      case (DateTimeType, data.DateTimeValue(v)) =>
+      case (DateTimeType, data.LocalDateTimeValue(v)) =>
         ujson.Str(v.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-      case (ZonedDateTimeType, data.ZonedTimeValue(v)) =>
+      case (ZonedDateTimeType, data.ZonedDateTimeValue(v)) =>
         ujson.Str(v.format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
       case _ => ujson.Null
     }
@@ -84,7 +84,7 @@ object WriteJs {
 
     case UnionF(alts, _) =>
       Fix.un[DataF](_) match {
-        case data.NamedUnionValue(selection, value) =>
+        case data.UnionValue(selection, value) =>
           alts
             .get(selection)
             .map { fn =>

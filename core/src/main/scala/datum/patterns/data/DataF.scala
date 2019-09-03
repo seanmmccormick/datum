@@ -14,8 +14,7 @@ sealed trait DataF[+R] extends Product with Serializable
 
 final case class ObjValue[R](fields: SortedMap[String, R]) extends DataF[R]
 final case class RowValue[R](values: Vector[R]) extends DataF[R]
-final case class NamedUnionValue[R](selection: String, value: R) extends DataF[R]
-final case class IndexedUnionValue[R](index: Int, value: R) extends DataF[R]
+final case class UnionValue[R](selection: String, value: R) extends DataF[R]
 
 final case class IntValue(value: Int) extends DataF[Nothing]
 final case class LongValue(value: Long) extends DataF[Nothing]
@@ -37,8 +36,8 @@ final case class BytesValue(value: Array[Byte]) extends DataF[Nothing] {
 
 final case class DateValue(value: LocalDate) extends DataF[Nothing]
 final case class TimestampValue(value: Instant) extends DataF[Nothing]
-final case class DateTimeValue(value: LocalDateTime) extends DataF[Nothing]
-final case class ZonedTimeValue(value: ZonedDateTime) extends DataF[Nothing]
+final case class LocalDateTimeValue(value: LocalDateTime) extends DataF[Nothing]
+final case class ZonedDateTimeValue(value: ZonedDateTime) extends DataF[Nothing]
 case object EmptyValue extends DataF[Nothing]
 
 object DataF {
@@ -53,24 +52,21 @@ object DataF {
           val tv = Traverse[Vector].traverse(vs)(f)
           G.map(tv)(RowValue.apply)
 
-        case NamedUnionValue(selection, a) =>
-          G.map(f(a))(b => NamedUnionValue(selection, b))
+        case UnionValue(selection, a) =>
+          G.map(f(a))(b => UnionValue(selection, b))
 
-        case IndexedUnionValue(idx, a) =>
-          G.map(f(a))(b => IndexedUnionValue(idx, b))
-
-        case EmptyValue            => G.pure(EmptyValue)
-        case v @ TextValue(_)      => G.pure(v)
-        case v @ BooleanValue(_)   => G.pure(v)
-        case v @ LongValue(_)      => G.pure(v)
-        case v @ IntValue(_)       => G.pure(v)
-        case v @ DoubleValue(_)    => G.pure(v)
-        case v @ FloatValue(_)     => G.pure(v)
-        case v @ BytesValue(_)     => G.pure(v)
-        case v @ DateValue(_)      => G.pure(v)
-        case v @ TimestampValue(_) => G.pure(v)
-        case v @ DateTimeValue(_)  => G.pure(v)
-        case v @ ZonedTimeValue(_) => G.pure(v)
+        case EmptyValue                => G.pure(EmptyValue)
+        case v @ TextValue(_)          => G.pure(v)
+        case v @ BooleanValue(_)       => G.pure(v)
+        case v @ LongValue(_)          => G.pure(v)
+        case v @ IntValue(_)           => G.pure(v)
+        case v @ DoubleValue(_)        => G.pure(v)
+        case v @ FloatValue(_)         => G.pure(v)
+        case v @ BytesValue(_)         => G.pure(v)
+        case v @ DateValue(_)          => G.pure(v)
+        case v @ TimestampValue(_)     => G.pure(v)
+        case v @ LocalDateTimeValue(_) => G.pure(v)
+        case v @ ZonedDateTimeValue(_) => G.pure(v)
       }
     }
   }

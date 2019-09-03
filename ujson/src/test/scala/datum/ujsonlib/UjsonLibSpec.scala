@@ -1,18 +1,20 @@
 package datum.ujsonlib
+
 import datum.gen.algebras.{DataGen, SchemaGen}
 import datum.gen.algebras.SchemaGen._
 import datum.patterns.{data => d}
 import datum.patterns.data.Data
 import datum.patterns.schemas._
 import datum.patterns.{schemas => s}
+import datum.modifiers.Optional
 import datum.ujsonlib.data.{JsReader, WriteJs}
 import datum.ujsonlib.implicits._
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalacheck.Prop._
 import org.scalatestplus.scalacheck.Checkers
 import cats.instances.all._
-import datum.modifiers.Optional
 
 class UjsonLibSpec extends WordSpec with Checkers with Matchers {
 
