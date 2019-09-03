@@ -1,6 +1,7 @@
 package datum.avrolib.schemas
 import datum.patterns.schemas._
 import datum.avrolib.properties._
+import datum.avrolib.schemas.errors.UnparseableAvroSchema
 import datum.patterns.properties.Property
 import higherkindness.droste.{Coalgebra, scheme}
 import org.apache.avro.LogicalTypes.TimestampMillis
@@ -76,7 +77,7 @@ object AvroSchemaReader {
 
             UnionF(alts.result(), extractProps(avro))
 
-          case _ => ???
+          case err => throw UnparseableAvroSchema(s"Unexpected RECORD_TYPE_KEY property when parsing avro: $err!")
         }
 
       case AvroSchema.Type.ARRAY =>
@@ -92,7 +93,7 @@ object AvroSchemaReader {
         }
         UnionF(alts.result())
 
-      case todo => ???
+      case other => throw UnparseableAvroSchema(s"Unknown AvroSchema type: $other!")
     }
   }
 
