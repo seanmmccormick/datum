@@ -47,11 +47,8 @@ object AvroSchemaReader {
           case "row" =>
             val columns = fields.view.map { field =>
               // Avro Union types can't carry properties despite being a (avro) "Schema" :/
-              //
-              // As done on the write side, props are instead carried by a fake union type appended to the
-              // end of the list of alternatives
               val noHeader = if (field.schema().isUnion) {
-                field.schema().getTypes.asScala.last.getObjectProp(NO_HEADER).asInstanceOf[Boolean]
+                true
               } else {
                 field.schema().getObjectProp(NO_HEADER).asInstanceOf[Boolean]
               }
@@ -65,29 +62,35 @@ object AvroSchemaReader {
 
             RowF(columns, extractProps(avro))
 
-          case _ => ???
-        }
-
-      case AvroSchema.Type.ARRAY =>
-        ArrayF(avro.getElementType, extractProps(avro))
-
-      case AvroSchema.Type.UNION =>
-        val fields = avro.getTypes.asScala
-        val propertyRecord = fields.last
-        val alternatives = fields.take(fields.length - 1)
-
-        propertyRecord.getProp(RECORD_TYPE_KEY) match {
-          case "named" =>
+          case "union" =>
+            val avroUnion = avro.getField("union")
+            assert(avroUnion.schema().isUnion, "Expected the union field to be of type Union!")
             val alts = SortedMap.newBuilder[String, AvroSchema]
-            alternatives.foreach { alt =>
+            avroUnion.schema().getTypes.asScala.foreach { alt =>
               val original = alt.getProp(ORIGINAL_NAME_KEY) match {
                 case null => alt.getName
                 case orig => orig
               }
               alts += (original -> alt.getField("schema").schema())
             }
-            UnionF(alts.result(), extractProps(propertyRecord))
+
+            UnionF(alts.result(), extractProps(avro))
+
+          case _ => ???
         }
+
+      case AvroSchema.Type.ARRAY =>
+        ArrayF(avro.getElementType, extractProps(avro))
+
+      // If we happen to get an unwrapped union (ie this schema was NOT created by writing a datum.schema)
+      // Then we will treat it as a UnionF with no properties, and assume nothing about the schema
+      case AvroSchema.Type.UNION =>
+        val alternatives = avro.getTypes.asScala
+        val alts = SortedMap.newBuilder[String, AvroSchema]
+        alternatives.foreach { alt =>
+          alts += (alt.getName -> alt)
+        }
+        UnionF(alts.result())
 
       case todo => ???
     }
@@ -111,7 +114,7 @@ object AvroSchemaReader {
     props.result()
   }
 
-  def originalName(field: AvroSchema.Field) = {
+  private def originalName(field: AvroSchema.Field) = {
     if (field.schema().isUnion) {
       field.schema().getTypes.asScala.last.getProp(ORIGINAL_NAME_KEY) match {
         case null => field.name()

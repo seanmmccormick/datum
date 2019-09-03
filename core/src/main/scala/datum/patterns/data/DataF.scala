@@ -14,8 +14,7 @@ sealed trait DataF[+R] extends Product with Serializable
 
 final case class ObjValue[R](fields: SortedMap[String, R]) extends DataF[R]
 final case class RowValue[R](values: Vector[R]) extends DataF[R]
-final case class NamedUnionValue[R](selection: String, value: R) extends DataF[R]
-final case class IndexedUnionValue[R](index: Int, value: R) extends DataF[R]
+final case class UnionValue[R](selection: String, value: R) extends DataF[R]
 
 final case class IntValue(value: Int) extends DataF[Nothing]
 final case class LongValue(value: Long) extends DataF[Nothing]
@@ -53,11 +52,8 @@ object DataF {
           val tv = Traverse[Vector].traverse(vs)(f)
           G.map(tv)(RowValue.apply)
 
-        case NamedUnionValue(selection, a) =>
-          G.map(f(a))(b => NamedUnionValue(selection, b))
-
-        case IndexedUnionValue(idx, a) =>
-          G.map(f(a))(b => IndexedUnionValue(idx, b))
+        case UnionValue(selection, a) =>
+          G.map(f(a))(b => UnionValue(selection, b))
 
         case EmptyValue                => G.pure(EmptyValue)
         case v @ TextValue(_)          => G.pure(v)

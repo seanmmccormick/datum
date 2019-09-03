@@ -84,7 +84,7 @@ object WriteJs {
 
     case UnionF(alts, _) =>
       Fix.un[DataF](_) match {
-        case data.NamedUnionValue(selection, value) =>
+        case data.UnionValue(selection, value) =>
           alts
             .get(selection)
             .map { fn =>

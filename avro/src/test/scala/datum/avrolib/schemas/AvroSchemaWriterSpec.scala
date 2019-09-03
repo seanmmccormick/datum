@@ -15,11 +15,12 @@ class AvroSchemaWriterSpec extends WordSpec with Checkers with Matchers {
     "be able to encode a simple schema" in {
       val simple = schemas.obj()(
         "foo" -> schemas.value(IntType),
-        "bar" -> schemas.value(BooleanType, Optional.enable)
+        "bar" -> schemas.value(BooleanType)
       )
 
       val avro = AvroSchemaWriter.write(simple)
 
+      println(avro)
       assert(avro.getField("foo").schema().getType == AvroSchema.Type.INT)
       assert(avro.getField("bar").schema().getType == AvroSchema.Type.BOOLEAN)
     }
@@ -34,7 +35,9 @@ class AvroSchemaWriterSpec extends WordSpec with Checkers with Matchers {
     "encode unions" in {
       val schema = schemas.union()("foo" -> schemas.value(IntType), "bar" -> schemas.value(IntType))
       val avro = AvroSchemaWriter.write(schema)
-      avro.getType shouldBe AvroSchema.Type.UNION
+      avro.getType shouldBe AvroSchema.Type.RECORD
+      avro.getField("union") shouldNot be(null)
+      avro.getField("union").schema().getType shouldBe AvroSchema.Type.UNION
     }
 
     "encode arbitrary schemas" in {

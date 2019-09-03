@@ -101,8 +101,14 @@ object RecordReader {
 
       case UnionF(alts, _) => {
         case generic: GenericRecord =>
-          val name = generic.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
-          data.union(name, alts(name)(generic.get("schema")))
+          // Unions are "boxed" in a record to ensure they have properties
+          generic.get("union") match {
+            case avroUnion: GenericRecord =>
+              val name = avroUnion.getSchema.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
+              data.union(name, alts(name)(avroUnion.get("schema")))
+            case null =>
+              data.empty
+          }
 
         case null => data.empty
 

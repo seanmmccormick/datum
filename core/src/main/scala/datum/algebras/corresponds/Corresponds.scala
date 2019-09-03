@@ -40,7 +40,7 @@ object Corresponds {
 
     case UnionF(alternatives, _) =>
       Fix.un[DataF](_) match {
-        case NamedUnionValue(selected, v) =>
+        case UnionValue(selected, v) =>
           alternatives.get(selected).exists(_.apply(v))
         case _ => false
       }

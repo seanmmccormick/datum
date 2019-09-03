@@ -38,7 +38,7 @@ package object data {
   def array(elements: Data*): Data = row(elements: _*)
 
   def union(selection: String, element: Data): Data = {
-    Fix(NamedUnionValue(selection, element))
+    Fix(UnionValue(selection, element))
   }
 
   def text(value: String): Data = {
@@ -90,21 +90,20 @@ package object data {
   }
 
   def typeOf(record: Data): String = Fix.un[DataF](record) match {
-    case ObjValue(_)             => "obj"
-    case RowValue(_)             => "row"
-    case NamedUnionValue(_, _)   => "named-union"
-    case IndexedUnionValue(_, _) => "indexed-union"
-    case IntValue(_)             => "int"
-    case LongValue(_)            => "long"
-    case FloatValue(_)           => "float"
-    case DoubleValue(_)          => "double"
-    case TextValue(_)            => "text"
-    case BooleanValue(_)         => "boolean"
-    case BytesValue(_)           => "bytes"
-    case DateValue(_)            => "date"
-    case TimestampValue(_)       => "timestamp"
-    case LocalDateTimeValue(_)   => "local-date-time"
-    case ZonedDateTimeValue(_)   => "zoned-date-time"
-    case EmptyValue              => "empty"
+    case ObjValue(_)           => "obj"
+    case RowValue(_)           => "row"
+    case UnionValue(_, _)      => "union"
+    case IntValue(_)           => "int"
+    case LongValue(_)          => "long"
+    case FloatValue(_)         => "float"
+    case DoubleValue(_)        => "double"
+    case TextValue(_)          => "text"
+    case BooleanValue(_)       => "boolean"
+    case BytesValue(_)         => "bytes"
+    case DateValue(_)          => "date"
+    case TimestampValue(_)     => "timestamp"
+    case LocalDateTimeValue(_) => "local-date-time"
+    case ZonedDateTimeValue(_) => "zoned-date-time"
+    case EmptyValue            => "empty"
   }
 }

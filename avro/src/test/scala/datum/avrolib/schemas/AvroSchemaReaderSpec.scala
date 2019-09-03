@@ -3,7 +3,7 @@ import datum.gen.algebras.SchemaGen
 import datum.patterns.properties._
 import datum.patterns.schemas._
 import datum.patterns.schemas
-import org.apache.avro.{Schema => AvroSchema}
+import org.apache.avro.{SchemaBuilder, Schema => AvroSchema}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
 import org.scalatest.{Matchers, WordSpec}
@@ -87,6 +87,26 @@ class AvroSchemaReaderSpec extends WordSpec with Checkers with Matchers {
       val avro = AvroSchemaWriter.write(schema)
       val read = AvroSchemaReader.read(avro)
       assert(read == schema)
+    }
+
+    "read avro schemas not originally created from writing datum schemas" in {
+      val testUnion = AvroSchema.createUnion(
+        AvroSchema.create(AvroSchema.Type.INT),
+        AvroSchema.create(AvroSchema.Type.STRING)
+      )
+      val avro = SchemaBuilder
+        .record("foo")
+        .fields()
+        .name("a")
+        .`type`(AvroSchema.create(AvroSchema.Type.INT))
+        .noDefault()
+        .name("b")
+        .`type`(testUnion)
+        .noDefault()
+        .endRecord()
+
+      val read = AvroSchemaReader.read(avro)
+      pprint.pprintln(read)
     }
 
     "be able to encode/decode an arbitrary schema to avro" in {

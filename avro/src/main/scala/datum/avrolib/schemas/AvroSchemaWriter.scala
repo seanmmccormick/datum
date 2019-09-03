@@ -110,19 +110,35 @@ object AvroSchemaWriter {
 
     case UnionF(alts, props) =>
       val fingerprint = alts.hashCode()
-      union(fingerprint, props, "named") { buffer =>
-        alts.zipWithIndex.foreach {
-          case ((k, alt), idx) =>
-            val record =
-              SchemaBuilder
+      State { registry =>
+        if (registry.contains(fingerprint)) {
+          (registry, registry(fingerprint))
+        } else {
+          val buffer = mutable.Buffer.empty[AvroSchema]
+          alts.zipWithIndex.foreach {
+            case ((k, alt), idx) =>
+              val record = SchemaBuilder
                 .record("r%x_%d".format(fingerprint, idx))
                 .fields()
                 .name("schema")
                 .`type`(alt)
                 .noDefault()
                 .endRecord()
-            record.addProp(ORIGINAL_NAME_KEY, k)
-            buffer.append(record)
+              record.addProp(ORIGINAL_NAME_KEY, k)
+              buffer.append(record)
+          }
+          val avroUnion = AvroSchema.createUnion(buffer.asJava)
+          val avro =
+            SchemaBuilder
+              .record("r%x".format(fingerprint))
+              .fields()
+              .name("union")
+              .`type`(avroUnion)
+              .noDefault()
+              .endRecord()
+          avro.addProp(RECORD_TYPE_KEY, "union")
+          includeProps(avro, props)
+          (registry + (fingerprint -> avro), avro)
         }
       }
   }
@@ -139,29 +155,6 @@ object AvroSchemaWriter {
       val result = AvroSchema.create(typ)
       logical.addToSchema(result)
       includeProps(result, props)
-    }
-  }
-
-  private def union(
-    fingerprint: Int,
-    props: PropertyMap,
-    `type`: String
-  )(fillFn: mutable.Buffer[AvroSchema] => Unit): Registry[AvroSchema] = {
-    State { registry =>
-      if (registry.contains(fingerprint)) {
-        (registry, registry(fingerprint))
-      } else {
-        val buffer = mutable.Buffer.empty[AvroSchema]
-        fillFn(buffer)
-
-        // union types can't call addProp directly, so append a fake record to store those props
-        val workaround = SchemaBuilder.record("$datum.properties_r%x".format(fingerprint)).fields().endRecord()
-        includeProps(workaround, props)
-        workaround.addProp(RECORD_TYPE_KEY, `type`)
-        buffer.append(workaround)
-        val avro = AvroSchema.createUnion(buffer.asJava)
-        (registry + (fingerprint -> avro), avro)
-      }
     }
   }
 
@@ -219,7 +212,7 @@ object AvroSchemaWriter {
       } else if (types.size() == 2 && types.get(0).isNullable) {
         safeAddProp(types.get(1), key, prop)
       } else {
-        types.get(types.size() - 1).addProp(key, prop)
+        assert(false, "All unions should be wrapped at this point!")
       }
     } else {
       field.addProp(key, prop)

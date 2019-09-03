@@ -114,14 +114,19 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
 
       case AttrF(Some(avro), UnionF(alts, _)) =>
         _.project match {
-          case NamedUnionValue(selection, value) =>
-            // NamedUnion record must be written with the original name set as a prop
-            val selected = avro.getTypes.asScala.find { s =>
+          case UnionValue(selection, value) =>
+            // Union record must be written with the original name set as a prop
+            val avroUnion = avro.getField("union").schema()
+            val selected = avroUnion.getTypes.asScala.find { s =>
               selection == s.getProp(datum.avrolib.schemas.ORIGINAL_NAME_KEY)
             }
+
             val generic = new Record(selected.get)
             generic.put("schema", alts(selection)(value))
-            generic
+
+            val boxed = new Record(avro)
+            boxed.put("union", generic)
+            boxed
 
           case otherwise =>
             val msg = s"Expected a named-union but got a ${data.typeOf(otherwise.fix)}"
@@ -134,31 +139,28 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
     }
   }
 
-  def optional(algebra: Algebra[SchemaWithAvro, Data => Any]): Algebra[SchemaWithAvro, Data => Any] =
+  def optional(algebra: Algebra[SchemaWithAvro, Data => Any]): Algebra[SchemaWithAvro, Data => Any] = {
+
+    def unwrap(schema: SchemaF[Data => Any], avro: AvroSchema): Data => Any = {
+      assert(schema.properties.get(Optional.key).contains(true.prop), "Expected schema to be optional!")
+      assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional row!")
+      assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
+      val unwrapped = avro.getTypes.get(0)
+
+      {
+        case data.empty => null
+        case otherwise  => algebra(AttrF(Some(unwrapped), schema))(otherwise)
+      }
+    }
+
     Algebra[SchemaWithAvro, Data => Any] {
 
       // Avro uses unions to create optional/nullable values - unwrap them to correctly handle options
-      case AttrF(Some(avro), obj @ ObjF(_, _)) if avro.getType == AvroSchema.Type.UNION =>
-        assert(obj.properties.get(Optional.key).contains(true.prop), "Expected an optional object!")
-        assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional obj!")
-        assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
-        val unwrapped = avro.getTypes.get(0)
+      case AttrF(Some(avro), obj @ ObjF(_, _)) if avro.getType == AvroSchema.Type.UNION => unwrap(obj, avro)
 
-        {
-          case data.empty => null
-          case otherwise  => algebra(AttrF(Some(unwrapped), obj))(otherwise)
-        }
+      case AttrF(Some(avro), row @ RowF(_, _)) if avro.getType == AvroSchema.Type.UNION => unwrap(row, avro)
 
-      case AttrF(Some(avro), row @ RowF(_, _)) if avro.getType == AvroSchema.Type.UNION =>
-        assert(row.properties.get(Optional.key).contains(true.prop), "Expected an optional row!")
-        assert(avro.getTypes.size() == 2, "Unexpected UNION size for an optional row!")
-        assert(avro.getTypes.get(1).getType == AvroSchema.Type.NULL, "NULL part of union not in expected position!")
-        val unwrapped = avro.getTypes.get(0)
-
-        {
-          case data.empty => null
-          case otherwise  => algebra(AttrF(Some(unwrapped), row))(otherwise)
-        }
+      case AttrF(Some(avro), union @ UnionF(_, _)) if avro.getType == AvroSchema.Type.UNION => unwrap(union, avro)
 
       case other @ AttrF(_, schema) if schema.properties.get(Optional.key).contains(true.prop) => {
         case data.empty => null
@@ -167,6 +169,7 @@ class RecordWriter(toAvro: Schema => AvroSchema) {
 
       case otherwise => algebra(otherwise)
     }
+  }
 
   def generateFor(schema: Schema): Data => GenericRecord = {
     // Functor for AttrF[...] comes from 'import higherkindness.droste.data.prelude._'
