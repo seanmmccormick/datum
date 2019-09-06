@@ -9,7 +9,7 @@ lazy val supportedScalaVersions = List(scala212)
 // Settings
 lazy val commonSettings = Seq(
   name := "datum",
-  version := "0.5.0-SNAPSHOT", //not published yet
+  version := "0.4.0", //not published yet
   crossScalaVersions := supportedScalaVersions,
   organization := "io.github.voltir",
   resolvers += Resolver.sonatypeRepo("releases"),
@@ -46,7 +46,7 @@ lazy val datum = (project in file("."))
     skip in publish := true,
     sonatypeProfileName := "io.github.voltir"
   )
-  .aggregate(core, gen, testCore, ujson)
+  .aggregate(core, gen, testCore, ujson, avro)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings)
