@@ -4,12 +4,12 @@ val drosteV = "0.7.0"
 
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
-lazy val supportedScalaVersions = List(scala212, scala211)
+lazy val supportedScalaVersions = List(scala212)
 
 // Settings
 lazy val commonSettings = Seq(
   name := "datum",
-  version := "0.4.0-SNAPSHOT", //not published yet
+  version := "0.4.0", //not published yet
   crossScalaVersions := supportedScalaVersions,
   organization := "io.github.voltir",
   resolvers += Resolver.sonatypeRepo("releases"),
